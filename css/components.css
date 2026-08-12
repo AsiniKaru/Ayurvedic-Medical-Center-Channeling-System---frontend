@@ -1,0 +1,530 @@
+/* ==========================================================================
+   Hela Osu Channeling System - Component Stylesheet
+   ========================================================================== */
+
+/* Hero Banner & Search Bar */
+.hero-section {
+    background: linear-gradient(135deg, #0d7a5f 0%, #064e3b 50%, #022c22 100%);
+    color: white;
+    padding: 4.5rem 0 5.5rem 0;
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2.5rem;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(217, 119, 6, 0.25) 0%, rgba(0,0,0,0) 70%);
+    border-radius: 50%;
+}
+
+.hero-content {
+    text-align: center;
+    max-width: 850px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-title {
+    font-size: 2.75rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 1rem;
+    letter-spacing: -0.75px;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.88);
+    margin-bottom: 2.5rem;
+}
+
+.hero-search-box {
+    background: white;
+    padding: 0.6rem;
+    border-radius: 60px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 780px;
+    margin: 0 auto;
+}
+
+.hero-search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    color: var(--dark);
+}
+
+.hero-search-box select {
+    border: 1px solid var(--gray-300);
+    border-radius: 30px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    outline: none;
+    background: var(--gray-100);
+    color: var(--dark);
+    cursor: pointer;
+}
+
+/* Doctor Cards Grid */
+.section-title-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+}
+
+.section-title {
+    font-size: 1.75rem;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.doctors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.75rem;
+}
+
+.doctor-card {
+    background: var(--card-bg);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+}
+
+.doctor-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+.doctor-card-header {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.doctor-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary-light);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.doctor-info {
+    flex: 1;
+}
+
+.doctor-name {
+    font-size: 1.2rem;
+    margin-bottom: 0.25rem;
+}
+
+.doctor-spec {
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+}
+
+.doctor-hospital {
+    color: var(--gray-500);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.doctor-card-body {
+    padding: 1.25rem 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.doctor-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--gray-100);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+}
+
+.rating-badge {
+    color: #d97706;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.fee-tag {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.doctor-card-footer {
+    padding: 1.25rem 1.5rem;
+    background: var(--gray-100);
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    gap: 0.75rem;
+}
+
+.doctor-card-footer .btn {
+    flex: 1;
+}
+
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(6px);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-container {
+    background: var(--card-bg);
+    width: 100%;
+    max-width: 650px;
+    max-height: 90vh;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow-y: auto;
+    animation: zoomIn 0.25s ease-out;
+}
+
+@keyframes zoomIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+    padding: 1.25rem 1.75rem;
+    border-bottom: 1px solid var(--gray-300);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--gray-500);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.modal-body {
+    padding: 1.75rem;
+}
+
+/* Slot Picker */
+.slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.slot-btn {
+    padding: 0.65rem;
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    background: var(--gray-100);
+    color: var(--dark);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.slot-btn:hover, .slot-btn.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+/* Payment Gateway Mockup */
+.payment-box {
+    border: 2px dashed var(--primary);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    background: var(--primary-light);
+    margin-top: 1.25rem;
+}
+
+.payment-methods {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.payment-method-card {
+    flex: 1;
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    background: var(--white);
+    text-align: center;
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.payment-method-card.selected {
+    border-color: var(--primary);
+    background: #ecfdf5;
+    color: var(--primary);
+}
+
+/* Tables */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-300);
+    background: var(--card-bg);
+}
+
+.custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.custom-table th {
+    background: var(--gray-200);
+    color: var(--dark);
+    font-weight: 700;
+    padding: 1rem 1.25rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.custom-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 0.95rem;
+}
+
+.custom-table tr:last-child td {
+    border-bottom: none;
+}
+
+.custom-table tr:hover {
+    background: var(--gray-100);
+}
+
+/* Dashboard Analytics Grid */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.kpi-card {
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    border: 1px solid var(--gray-300);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.kpi-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.kpi-value {
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.kpi-label {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    font-weight: 600;
+}
+
+/* Floating AI Chatbot */
+.chatbot-widget {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 1500;
+}
+
+.chatbot-btn {
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    font-size: 1.75rem;
+    box-shadow: 0 8px 24px var(--primary-glow);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.chatbot-btn:hover {
+    transform: scale(1.08);
+}
+
+.chatbot-box {
+    position: absolute;
+    bottom: 80px;
+    right: 0;
+    width: 380px;
+    height: 520px;
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-300);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+}
+
+.chatbot-box.active {
+    display: flex;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.chatbot-header {
+    background: linear-gradient(135deg, var(--primary), #064e3b);
+    color: white;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chatbot-messages {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: var(--gray-100);
+}
+
+.chat-msg {
+    max-width: 80%;
+    padding: 0.75rem 1rem;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.chat-msg.bot {
+    background: white;
+    color: var(--dark);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    box-shadow: var(--shadow-sm);
+}
+
+.chat-msg.user {
+    background: var(--primary);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+.chatbot-input-area {
+    padding: 0.75rem;
+    border-top: 1px solid var(--gray-300);
+    display: flex;
+    gap: 0.5rem;
+    background: var(--card-bg);
+}
+
+.chatbot-input-area input {
+    flex: 1;
+    border: 1px solid var(--gray-300);
+    border-radius: 20px;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+/* Printable Prescription & Receipt Styles */
+.printable-document {
+    padding: 2.5rem;
+    background: white;
+    color: #1e293b;
+    border-radius: var(--radius-md);
+    border: 2px solid #e2e8f0;
+}
+
+.doc-header-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px double #0d7a5f;
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
+}
