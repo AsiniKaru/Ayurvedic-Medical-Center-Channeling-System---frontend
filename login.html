@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hela Osu Weda Gedara Channeling System | Login & Registration</title>
+    <meta name="description" content="Official Doctor Channeling Portal for Hela Osu Weda Gedara centers across Sri Lanka. Sign in to your patient, doctor, or admin account.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Noto+Sans+Sinhala:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body style="min-height: 100vh; display: flex; flex-direction: column;">
+
+    <!-- Sticky Navigation Bar -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="login.html" class="brand-logo">
+                <div class="brand-logo-icon">🌿</div>
+                <div>
+                    <span data-i18n="brandName">Hela Osu Weda Gedara</span>
+                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 500; text-transform: uppercase;" data-i18n="tagline">Doctor Channeling System</div>
+                </div>
+            </a>
+
+            <div class="nav-controls">
+                <!-- Multi-Language Switcher -->
+                <select id="langSelect" style="padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; outline: none;" onchange="window.i18n.setLanguage(this.value)">
+                    <option value="en">🌐 English</option>
+                    <option value="si">🇱🇰 සිංහල</option>
+                    <option value="ta">🇱🇰 தமிழ்</option>
+                </select>
+
+                <!-- Dynamic Auth Header Area -->
+                <div id="userHeaderArea">
+                    <!-- Rendered via JS -->
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main style="flex: 1;">
+
+        <!-- 0. LOGIN PAGE VIEW -->
+        <section id="view-login" class="page-view active-view">
+            <div class="container" style="max-width: 480px; margin-top: 2.5rem;">
+                <div class="glass-card" style="box-shadow: var(--shadow-lg); padding: 2.25rem;">
+                    <div style="text-align: center; margin-bottom: 1.75rem;">
+                        <div id="loginRoleIcon" style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border-radius: 16px; margin: 0 auto 0.75rem auto; display: flex; align-items: center; justify-content: center; font-size: 1.75rem;">👤</div>
+                        <h2 id="loginTitleText">Patient Login</h2>
+                        <p style="color: #64748b; font-size: 0.85rem; margin-top: 0.25rem;">Hela Osu Weda Gedara Portal</p>
+                    </div>
+
+                    <form onsubmit="event.preventDefault(); app.login(
+                        document.getElementById('loginUsername').value,
+                        document.getElementById('loginPassword').value,
+                        document.getElementById('loginRoleInput').value
+                    );">
+                        <input type="hidden" id="loginRoleInput" value="patient" />
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Username</label>
+                            <input type="text" id="loginUsername" placeholder="e.g. saman" required style="width: 100%; padding: 0.7rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                        </div>
+
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Password</label>
+                            <input type="password" id="loginPassword" placeholder="••••••••" required style="width: 100%; padding: 0.7rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.05rem;">
+                            <i class="fa-solid fa-right-to-bracket"></i> Sign In
+                        </button>
+                    </form>
+
+                    <!-- Role Switcher Buttons at Lower Section -->
+                    <div style="margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px dashed #cbd5e1;">
+                        <p style="font-size: 0.8rem; text-align: center; color: #64748b; font-weight: 600; margin-bottom: 0.75rem;">Logging in as a Doctor or Admin?</p>
+                        <div id="loginRoleSwitchButtons" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('doctor')">
+                                🩺 Switch to Doctor Login
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('admin')">
+                                ⚙️ Switch to Admin Login
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 1.25rem;">
+                        <p style="font-size: 0.85rem; color: #64748b;">Don't have a patient account? <a href="#" onclick="app.switchView('view-register')">Register here</a></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 0.1 REGISTER PAGE VIEW -->
+        <section id="view-register" class="page-view">
+            <div class="container" style="max-width: 550px; margin-top: 2rem;">
+                <div class="glass-card" style="box-shadow: var(--shadow-lg); padding: 2.25rem;">
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <h2>Register Patient Account</h2>
+                        <p style="color: #64748b; font-size: 0.9rem;">Join Hela Osu Weda Gedara Channeling Network</p>
+                    </div>
+
+                    <form onsubmit="event.preventDefault(); app.registerPatient({
+                        username: document.getElementById('regUsername').value,
+                        name: document.getElementById('regName').value,
+                        email: document.getElementById('regEmail').value,
+                        password: document.getElementById('regPassword').value,
+                        phone: document.getElementById('regPhone').value,
+                        nic: document.getElementById('regNic').value,
+                        age: document.getElementById('regAge').value,
+                        gender: document.getElementById('regGender').value
+                    });">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Username</label>
+                                <input type="text" id="regUsername" placeholder="e.g. saman_k" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                            </div>
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Full Name</label>
+                                <input type="text" id="regName" placeholder="Saman Kumara" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Email</label>
+                                <input type="email" id="regEmail" placeholder="saman@gmail.com" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                            </div>
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Phone Number</label>
+                                <input type="text" id="regPhone" placeholder="0771234567" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">NIC Number</label>
+                                <input type="text" id="regNic" placeholder="199238402910" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                            </div>
+                            <div>
+                                <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Age & Gender</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <input type="number" id="regAge" placeholder="30" style="width: 45%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                                    <select id="regGender" style="width: 55%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;">
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 1.25rem;">
+                            <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Create Password</label>
+                            <input type="password" id="regPassword" placeholder="••••••••" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.05rem;">
+                            <i class="fa-solid fa-user-check"></i> Register Patient Account
+                        </button>
+                    </form>
+
+                    <div style="text-align: center; margin-top: 1.25rem;">
+                        <p style="font-size: 0.85rem; color: #64748b;">Already registered? <a href="#" onclick="app.setLoginRole('patient'); app.switchView('view-login');">Sign in here</a></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer style="background: #0f172a; color: white; padding: 2.5rem 0 1.5rem 0; margin-top: 4rem;">
+        <div class="container" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2rem; border-bottom: 1px solid #334155; padding-bottom: 2rem;">
+            <div>
+                <h3 style="color: white; margin-bottom: 0.5rem;">🌿 Hela Osu Weda Gedara Channeling</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Connecting Sri Lanka with trusted Wedamahataya specialists across all Hela Osu branches.</p>
+            </div>
+            <div>
+                <p style="font-weight: 600;">Emergency Medical Hotline</p>
+                <p style="color: #10b981; font-weight: 800; font-size: 1.2rem;"><i class="fa-solid fa-phone"></i> Hotline 1390</p>
+            </div>
+        </div>
+        <div class="container" style="text-align: center; color: #64748b; font-size: 0.85rem; padding-top: 1.5rem;" data-i18n="footerCopy">
+            © 2026 Hela Osu Weda Gedara. All Rights Reserved.
+        </div>
+    </footer>
+
+    <!-- GLOBAL MODAL OVERLAY CONTAINER -->
+    <div id="globalModalOverlay" class="modal-overlay">
+        <div id="modalContent" class="modal-container">
+            <!-- Dynamic Modal Content rendered via JS -->
+        </div>
+    </div>
+
+    <!-- FLOATING AI ASSISTANT CHATBOT -->
+    <div class="chatbot-widget">
+        <div id="chatbotBox" class="chatbot-box">
+            <div class="chatbot-header">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fa-solid fa-robot"></i>
+                    <strong>Hela Osu AI Health Assistant</strong>
+                </div>
+                <button style="background: transparent; border: none; color: white; font-size: 1.25rem; cursor: pointer;" onclick="window.chatbot.toggle()">&times;</button>
+            </div>
+            <div id="chatMessagesContainer" class="chatbot-messages">
+                <!-- Messages rendered via JS -->
+            </div>
+            <div class="chatbot-input-area">
+                <input type="text" id="chatInput" placeholder="Ask about Hela doctors or booking..." onkeypress="if(event.key === 'Enter') { window.chatbot.sendMessage(this.value); this.value = ''; }" />
+                <button class="btn btn-primary btn-sm" onclick="const inp = document.getElementById('chatInput'); window.chatbot.sendMessage(inp.value); inp.value = '';">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+        <button class="chatbot-btn" onclick="window.chatbot.toggle()">
+            <i class="fa-solid fa-comment-medical"></i>
+        </button>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- JS MODULE LOADERS -->
+    <script src="js/data.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/pdf-generator.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/chatbot.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>

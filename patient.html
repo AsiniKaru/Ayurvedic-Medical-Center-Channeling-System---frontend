@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hela Osu Weda Gedara | Patient Channeling Portal</title>
+    <meta name="description" content="Book appointments, view channeling vouchers, and consult online with Hela Osu Weda Gedara specialists.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Noto+Sans+Sinhala:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body style="min-height: 100vh; display: flex; flex-direction: column;">
+
+    <!-- Sticky Navigation Bar -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="patient.html" class="brand-logo">
+                <div class="brand-logo-icon">🌿</div>
+                <div>
+                    <span data-i18n="brandName">Hela Osu Weda Gedara</span>
+                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 500; text-transform: uppercase;" data-i18n="tagline">Doctor Channeling System</div>
+                </div>
+            </a>
+
+            <!-- Patient Nav Links -->
+            <ul class="nav-links" id="mainNavLinks">
+                <li class="nav-link role-patient-link active" data-view="view-home" id="navLinkHome">
+                    <i class="fa-solid fa-house"></i> <span data-i18n="navHome">Home</span>
+                </li>
+                <li class="nav-link role-patient-link" data-view="view-bookings" id="navLinkBookings">
+                    <i class="fa-solid fa-calendar-days"></i> <span data-i18n="navBookings">My Bookings</span>
+                </li>
+                <li class="nav-link role-patient-link" data-view="view-consultation" id="navLinkConsultation">
+                    <i class="fa-solid fa-file-medical"></i> <span data-i18n="navConsultation">Report Consultation</span>
+                </li>
+            </ul>
+
+            <div class="nav-controls">
+                <!-- Multi-Language Switcher -->
+                <select id="langSelect" style="padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; outline: none;" onchange="window.i18n.setLanguage(this.value)">
+                    <option value="en">🌐 English</option>
+                    <option value="si">🇱🇰 සිංහල</option>
+                    <option value="ta">🇱🇰 தமிழ்</option>
+                </select>
+
+                <!-- Dynamic Auth Header Area -->
+                <div id="userHeaderArea">
+                    <!-- Rendered via JS based on session -->
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main style="flex: 1;">
+
+        <!-- 1. PATIENT: HOME & SEARCH VIEW -->
+        <section id="view-home" class="page-view active-view">
+            <!-- Hero Banner -->
+            <div class="hero-section">
+                <div class="container hero-content">
+                    <h1 class="hero-title" data-i18n="heroTitle">Channel Hela Osu Weda Gedara Ayurvedic Specialists</h1>
+                    <p class="hero-subtitle" data-i18n="heroSub">Book online appointments exclusively for Hela Osu Weda Gedara medical centers across Sri Lanka.</p>
+                    
+                    <div class="hero-search-box">
+                        <i class="fa-solid fa-magnifying-glass" style="margin-left: 1rem; color: #94a3b8;"></i>
+                        <input type="text" id="heroSearchInput" data-i18n="searchPlaceholder" placeholder="Search Wedamahataya name, center branch or condition..." />
+                        
+                        <select id="heroSpecSelect">
+                            <option value="all" data-i18n="specAll">All Hela Specializations</option>
+                            <option value="Ayurveda" data-i18n="specAyurveda">Ayurveda & Weda Kam</option>
+                            <option value="Wellness" data-i18n="specCardiology">Ayurvedic Wellness & Vitality</option>
+                            <option value="Pediatrics" data-i18n="specPediatrics">Pediatrics (Bala Roga)</option>
+                            <option value="Spine" data-i18n="specNeurology">Spine & Joint Rehabilitation</option>
+                            <option value="Dermatology" data-i18n="specDermatology">Dermatology & Skin Care</option>
+                        </select>
+
+                        <button class="btn btn-primary" onclick="app.filterDoctors()">
+                            <span data-i18n="btnSearchDoctor">Search Doctors</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Doctor Directory Section -->
+            <div class="container">
+                <div class="section-title-wrap">
+                    <h2 class="section-title">
+                        <i class="fa-solid fa-clinic-medical" style="color: var(--primary);"></i> Hela Osu Weda Gedara Doctors
+                    </h2>
+                    <span style="color: var(--gray-500); font-weight: 500;">Exclusively Hela Osu Medical Centers</span>
+                </div>
+
+                <div id="doctorsGrid" class="doctors-grid">
+                    <!-- Dynamic Doctor Cards rendered via JS -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 2. PATIENT: MY BOOKINGS VIEW -->
+        <section id="view-bookings" class="page-view">
+            <div class="container">
+                <div class="section-title-wrap">
+                    <h2 class="section-title">
+                        <i class="fa-solid fa-calendar-check" style="color: var(--primary);"></i> My Channeling Bookings
+                    </h2>
+                </div>
+
+                <div id="patientBookingsList">
+                    <!-- Dynamic bookings rendered via JS -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 3. PATIENT: REPORT CONSULTATION VIEW -->
+        <section id="view-consultation" class="page-view">
+            <div class="container">
+                <div class="section-title-wrap">
+                    <h2 class="section-title">
+                        <i class="fa-solid fa-file-medical" style="color: var(--primary);"></i> Upload Diagnostic Report for Doctor Advice
+                    </h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-upload"></i> New Consultation Request</h3>
+                        <form onsubmit="event.preventDefault(); app.submitReportConsultation({
+                            doctorId: document.getElementById('rcDocSelect').value,
+                            reportTitle: document.getElementById('rcTitleInput').value,
+                            message: document.getElementById('rcMsgInput').value,
+                            fileName: document.getElementById('rcFileInput').files[0] ? document.getElementById('rcFileInput').files[0].name : 'Diagnostic_Scan.pdf'
+                        });">
+                            <div style="margin-bottom: 1rem;">
+                                <label style="font-weight: 600; font-size: 0.9rem;">Select Hela Osu Doctor</label>
+                                <select id="rcDocSelect" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;">
+                                    <option value="doc-101">Dr. Deshabandu Wickramasinghe (Colombo 07)</option>
+                                    <option value="doc-102">Dr. Anura Jayawardena (Kandy)</option>
+                                    <option value="doc-103">Dr. Nilmini Fernando (Galle)</option>
+                                    <option value="doc-104">Dr. Chaminda Bandara (Kurunegala)</option>
+                                </select>
+                            </div>
+
+                            <div style="margin-bottom: 1rem;">
+                                <label style="font-weight: 600; font-size: 0.9rem;">Report Title / Subject</label>
+                                <input type="text" id="rcTitleInput" placeholder="e.g. Spine X-Ray / Lab Report" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                            </div>
+
+                            <div style="margin-bottom: 1rem;">
+                                <label style="font-weight: 600; font-size: 0.9rem;">Upload Document (PDF / Image)</label>
+                                <input type="file" id="rcFileInput" style="width: 100%; padding: 0.5rem; border: 1px dashed #cbd5e1; border-radius: 8px; background: #f8fafc;" />
+                            </div>
+
+                            <div style="margin-bottom: 1.25rem;">
+                                <label style="font-weight: 600; font-size: 0.9rem;">Your Question or Notes for Doctor</label>
+                                <textarea id="rcMsgInput" rows="3" placeholder="Describe symptoms or ask for doctor's feedback..." required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                <i class="fa-solid fa-paper-plane"></i> Send Report to Doctor
+                            </button>
+                        </form>
+                    </div>
+
+                    <div>
+                        <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-comments"></i> Consultation Feedback Inbox</h3>
+                        <div id="reportConsultationsList">
+                            <!-- Rendered via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer style="background: #0f172a; color: white; padding: 2.5rem 0 1.5rem 0; margin-top: 4rem;">
+        <div class="container" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2rem; border-bottom: 1px solid #334155; padding-bottom: 2rem;">
+            <div>
+                <h3 style="color: white; margin-bottom: 0.5rem;">🌿 Hela Osu Weda Gedara Channeling</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Connecting Sri Lanka with trusted Wedamahataya specialists across all Hela Osu branches.</p>
+            </div>
+            <div>
+                <p style="font-weight: 600;">Emergency Medical Hotline</p>
+                <p style="color: #10b981; font-weight: 800; font-size: 1.2rem;"><i class="fa-solid fa-phone"></i> Hotline 1390</p>
+            </div>
+        </div>
+        <div class="container" style="text-align: center; color: #64748b; font-size: 0.85rem; padding-top: 1.5rem;" data-i18n="footerCopy">
+            © 2026 Hela Osu Weda Gedara. All Rights Reserved.
+        </div>
+    </footer>
+
+    <!-- GLOBAL MODAL OVERLAY CONTAINER -->
+    <div id="globalModalOverlay" class="modal-overlay">
+        <div id="modalContent" class="modal-container">
+            <!-- Dynamic Modal Content rendered via JS -->
+        </div>
+    </div>
+
+    <!-- FLOATING AI ASSISTANT CHATBOT -->
+    <div class="chatbot-widget">
+        <div id="chatbotBox" class="chatbot-box">
+            <div class="chatbot-header">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fa-solid fa-robot"></i>
+                    <strong>Hela Osu AI Health Assistant</strong>
+                </div>
+                <button style="background: transparent; border: none; color: white; font-size: 1.25rem; cursor: pointer;" onclick="window.chatbot.toggle()">&times;</button>
+            </div>
+            <div id="chatMessagesContainer" class="chatbot-messages">
+                <!-- Messages rendered via JS -->
+            </div>
+            <div class="chatbot-input-area">
+                <input type="text" id="chatInput" placeholder="Ask about Hela doctors or booking..." onkeypress="if(event.key === 'Enter') { window.chatbot.sendMessage(this.value); this.value = ''; }" />
+                <button class="btn btn-primary btn-sm" onclick="const inp = document.getElementById('chatInput'); window.chatbot.sendMessage(inp.value); inp.value = '';">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+        <button class="chatbot-btn" onclick="window.chatbot.toggle()">
+            <i class="fa-solid fa-comment-medical"></i>
+        </button>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- JS MODULE LOADERS -->
+    <script src="js/data.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/pdf-generator.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/chatbot.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>

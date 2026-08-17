@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hela Osu Weda Gedara | Admin Management Portal</title>
+    <meta name="description" content="Admin Dashboard & Management Portal for Hela Osu Weda Gedara doctor channeling network across Sri Lanka.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Noto+Sans+Sinhala:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body style="min-height: 100vh; display: flex; flex-direction: column;">
+
+    <!-- Sticky Navigation Bar -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="admin.html" class="brand-logo">
+                <div class="brand-logo-icon">🌿</div>
+                <div>
+                    <span data-i18n="brandName">Hela Osu Weda Gedara</span>
+                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 500; text-transform: uppercase;" data-i18n="tagline">Doctor Channeling System</div>
+                </div>
+            </a>
+
+            <!-- Admin Nav Links -->
+            <ul class="nav-links" id="mainNavLinks">
+                <li class="nav-link role-admin-link active" data-view="view-admin-dashboard" id="navLinkAdminDash">
+                    <i class="fa-solid fa-chart-line"></i> <span>Dashboard & Analytics</span>
+                </li>
+                <li class="nav-link role-admin-link" data-view="view-admin-doctors" id="navLinkAdminDocs">
+                    <i class="fa-solid fa-user-doctor"></i> <span>Manage Doctors</span>
+                </li>
+                <li class="nav-link role-admin-link" data-view="view-admin-patients" id="navLinkAdminPats">
+                    <i class="fa-solid fa-users"></i> <span>Manage Patients</span>
+                </li>
+                <li class="nav-link role-admin-link" data-view="view-admin-appointments" id="navLinkAdminAps">
+                    <i class="fa-solid fa-list"></i> <span>Appointments Log</span>
+                </li>
+            </ul>
+
+            <div class="nav-controls">
+                <!-- Multi-Language Switcher -->
+                <select id="langSelect" style="padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; outline: none;" onchange="window.i18n.setLanguage(this.value)">
+                    <option value="en">🌐 English</option>
+                    <option value="si">🇱🇰 සිංහල</option>
+                    <option value="ta">🇱🇰 தமிழ்</option>
+                </select>
+
+                <!-- Dynamic Auth Header Area -->
+                <div id="userHeaderArea">
+                    <!-- Rendered via JS based on session -->
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main style="flex: 1;">
+
+        <!-- ADMIN VIEW 1: DASHBOARD & ANALYTICS -->
+        <section id="view-admin-dashboard" class="page-view active-view">
+            <div class="container" style="margin-top: 1.5rem;">
+                <div class="section-title-wrap">
+                    <h2 class="section-title">
+                        <i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> Admin System Overview & Analytics
+                    </h2>
+                    <button class="btn btn-primary" onclick="adminController.openAddDoctorModal()">
+                        <i class="fa-solid fa-user-plus"></i> Add New Hela Osu Doctor
+                    </button>
+                </div>
+
+                <!-- KPI Overview Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: #e0f2fe; color: #0284c7;"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                        <div>
+                            <div class="kpi-value" id="kpiTotalRevenue">Rs. 0</div>
+                            <div class="kpi-label">Total Platform Revenue</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: #dcfce7; color: #15803d;"><i class="fa-solid fa-calendar-check"></i></div>
+                        <div>
+                            <div class="kpi-value" id="kpiTotalAppointments">0</div>
+                            <div class="kpi-label">Total Appointments</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: #fef3c7; color: #b45309;"><i class="fa-solid fa-user-doctor"></i></div>
+                        <div>
+                            <div class="kpi-value" id="kpiTotalDoctors">0</div>
+                            <div class="kpi-label">Registered Doctors</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: #fee2e2; color: #b91c1c;"><i class="fa-solid fa-clock"></i></div>
+                        <div>
+                            <div class="kpi-value" id="kpiPendingApprovals">0</div>
+                            <div class="kpi-label">Pending Approvals</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart.js Graphs -->
+                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; margin-bottom: 2.5rem;">
+                    <div class="glass-card">
+                        <h4 style="margin-bottom: 1rem;"><i class="fa-solid fa-chart-area"></i> Appointment Booking Trends</h4>
+                        <canvas id="chartAppointmentTrends" height="140"></canvas>
+                    </div>
+                    <div class="glass-card">
+                        <h4 style="margin-bottom: 1rem;"><i class="fa-solid fa-chart-pie"></i> Specialization Distribution</h4>
+                        <canvas id="chartSpecializations" height="140"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN VIEW 2: MANAGE DOCTORS -->
+        <section id="view-admin-doctors" class="page-view">
+            <div class="container" style="margin-top: 1.5rem;">
+                <div class="section-title-wrap">
+                    <h2 class="section-title"><i class="fa-solid fa-user-doctor" style="color: var(--primary);"></i> Doctor Registrations & Approvals</h2>
+                    <button class="btn btn-primary" onclick="adminController.openAddDoctorModal()">
+                        <i class="fa-solid fa-user-plus"></i> Add New Doctor
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Doctor Name</th>
+                                <th>Specialization</th>
+                                <th>Hela Osu Branch</th>
+                                <th>Fee</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminDoctorsTableBody">
+                            <!-- Rendered via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN VIEW 3: MANAGE PATIENTS -->
+        <section id="view-admin-patients" class="page-view">
+            <div class="container" style="margin-top: 1.5rem;">
+                <div class="section-title-wrap">
+                    <h2 class="section-title"><i class="fa-solid fa-users" style="color: var(--primary);"></i> Patient Account Management</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Patient Name</th>
+                                <th>Contact</th>
+                                <th>NIC</th>
+                                <th>Age & Gender</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminPatientsTableBody">
+                            <!-- Rendered via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN VIEW 4: APPOINTMENTS LOG -->
+        <section id="view-admin-appointments" class="page-view">
+            <div class="container" style="margin-top: 1.5rem;">
+                <div class="section-title-wrap">
+                    <h2 class="section-title"><i class="fa-solid fa-list" style="color: var(--primary);"></i> System-Wide Appointments Log</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Patient</th>
+                                <th>Doctor</th>
+                                <th>Date & Slot</th>
+                                <th>Fee</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminAppointmentsTableBody">
+                            <!-- Rendered via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer style="background: #0f172a; color: white; padding: 2.5rem 0 1.5rem 0; margin-top: 4rem;">
+        <div class="container" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2rem; border-bottom: 1px solid #334155; padding-bottom: 2rem;">
+            <div>
+                <h3 style="color: white; margin-bottom: 0.5rem;">🌿 Hela Osu Weda Gedara Channeling</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Connecting Sri Lanka with trusted Wedamahataya specialists across all Hela Osu branches.</p>
+            </div>
+            <div>
+                <p style="font-weight: 600;">Emergency Medical Hotline</p>
+                <p style="color: #10b981; font-weight: 800; font-size: 1.2rem;"><i class="fa-solid fa-phone"></i> Hotline 1390</p>
+            </div>
+        </div>
+        <div class="container" style="text-align: center; color: #64748b; font-size: 0.85rem; padding-top: 1.5rem;" data-i18n="footerCopy">
+            © 2026 Hela Osu Weda Gedara. All Rights Reserved.
+        </div>
+    </footer>
+
+    <!-- GLOBAL MODAL OVERLAY CONTAINER -->
+    <div id="globalModalOverlay" class="modal-overlay">
+        <div id="modalContent" class="modal-container">
+            <!-- Dynamic Modal Content rendered via JS -->
+        </div>
+    </div>
+
+    <!-- FLOATING AI ASSISTANT CHATBOT -->
+    <div class="chatbot-widget">
+        <div id="chatbotBox" class="chatbot-box">
+            <div class="chatbot-header">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fa-solid fa-robot"></i>
+                    <strong>Hela Osu AI Health Assistant</strong>
+                </div>
+                <button style="background: transparent; border: none; color: white; font-size: 1.25rem; cursor: pointer;" onclick="window.chatbot.toggle()">&times;</button>
+            </div>
+            <div id="chatMessagesContainer" class="chatbot-messages">
+                <!-- Messages rendered via JS -->
+            </div>
+            <div class="chatbot-input-area">
+                <input type="text" id="chatInput" placeholder="Ask about Hela doctors or booking..." onkeypress="if(event.key === 'Enter') { window.chatbot.sendMessage(this.value); this.value = ''; }" />
+                <button class="btn btn-primary btn-sm" onclick="const inp = document.getElementById('chatInput'); window.chatbot.sendMessage(inp.value); inp.value = '';">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+        <button class="chatbot-btn" onclick="window.chatbot.toggle()">
+            <i class="fa-solid fa-comment-medical"></i>
+        </button>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- JS MODULE LOADERS -->
+    <script src="js/data.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/pdf-generator.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/chatbot.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>

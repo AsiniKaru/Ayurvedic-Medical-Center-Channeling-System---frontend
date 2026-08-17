@@ -1,11 +1,12 @@
 /**
  * Hela Osu Channeling System - Core Application Controller, Auth & Router
- * Exclusively for Hela Osu Weda Gedara Centers with Strict Role Isolation
+ * Exclusively for Hela Osu Weda Gedara Centers with Role-Based Navigation Tabs
  */
 
 class AppController {
     constructor() {
         this.session = JSON.parse(localStorage.getItem('hela_osu_session')) || null;
+        this.currentLoginRole = 'patient';
         this.selectedDoctorForBooking = null;
         this.selectedSlotForBooking = null;
         this.selectedDateForBooking = null;
@@ -23,6 +24,7 @@ class AppController {
                 this.applySessionPermissions();
             } else {
                 this.switchView('view-login');
+                this.setLoginRole('patient');
             }
 
             this.updateNotificationBadge();
@@ -62,23 +64,86 @@ class AppController {
     // AUTHENTICATION & ROLE ACCESS CONTROL
     // -------------------------------------------------------------------------
 
-    login(email, password, role) {
+    setLoginRole(role) {
+        this.currentLoginRole = role;
+        const titleElem = document.getElementById('loginTitleText');
+        const iconElem = document.getElementById('loginRoleIcon');
+        const roleHiddenInput = document.getElementById('loginRoleInput');
+        const switchButtonsDiv = document.getElementById('loginRoleSwitchButtons');
+        const usernameInput = document.getElementById('loginUsername');
+
+        if (roleHiddenInput) roleHiddenInput.value = role;
+
+        if (role === 'patient') {
+            if (titleElem) titleElem.textContent = 'Patient Login';
+            if (iconElem) iconElem.innerHTML = '👤';
+            if (usernameInput) usernameInput.placeholder = 'e.g. saman';
+            if (switchButtonsDiv) {
+                switchButtonsDiv.innerHTML = `
+                    <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('doctor')">
+                        🩺 Switch to Doctor Login
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('admin')">
+                        ⚙️ Switch to Admin Login
+                    </button>
+                `;
+            }
+        } else if (role === 'doctor') {
+            if (titleElem) titleElem.textContent = 'Doctor (Wedamahataya) Login';
+            if (iconElem) iconElem.innerHTML = '🩺';
+            if (usernameInput) usernameInput.placeholder = 'e.g. dr_wickramasinghe';
+            if (switchButtonsDiv) {
+                switchButtonsDiv.innerHTML = `
+                    <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('patient')">
+                        👤 Switch to Patient Login
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('admin')">
+                        ⚙️ Switch to Admin Login
+                    </button>
+                `;
+            }
+        } else if (role === 'admin') {
+            if (titleElem) titleElem.textContent = 'System Admin Login';
+            if (iconElem) iconElem.innerHTML = '⚙️';
+            if (usernameInput) usernameInput.placeholder = 'e.g. admin';
+            if (switchButtonsDiv) {
+                switchButtonsDiv.innerHTML = `
+                    <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('patient')">
+                        👤 Switch to Patient Login
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('doctor')">
+                        🩺 Switch to Doctor Login
+                    </button>
+                `;
+            }
+        }
+    }
+
+    getCurrentPageName() {
+        const path = window.location.pathname;
+        const page = path.split('/').pop() || 'index.html';
+        return page.toLowerCase();
+    }
+
+    login(username, password, role = this.currentLoginRole) {
         const data = window.dbStore.get();
         let user = null;
 
+        const cleanUser = username.trim().toLowerCase();
+
         if (role === 'patient') {
-            user = data.patients.find(p => p.email.toLowerCase() === email.toLowerCase() && p.password === password);
+            user = data.patients.find(p => p.username.toLowerCase() === cleanUser && p.password === password);
         } else if (role === 'doctor') {
-            user = data.doctors.find(d => d.email.toLowerCase() === email.toLowerCase() && d.password === password);
+            user = data.doctors.find(d => d.username.toLowerCase() === cleanUser && d.password === password);
         } else if (role === 'admin') {
-            user = data.admins ? data.admins.find(a => a.email.toLowerCase() === email.toLowerCase() && a.password === password) : null;
-            if (!user && email.toLowerCase() === 'admin@helaosu.lk' && password === 'password') {
-                user = { id: 'admin-1', name: 'System Admin', email: 'admin@helaosu.lk', role: 'admin' };
+            user = data.admins ? data.admins.find(a => a.username.toLowerCase() === cleanUser && a.password === password) : null;
+            if (!user && cleanUser === 'admin' && password === 'password') {
+                user = { id: 'admin-1', username: 'admin', name: 'System Admin', role: 'admin' };
             }
         }
 
         if (!user) {
-            this.showToast('Invalid Email, Password, or selected Role.', 'danger');
+            this.showToast('Invalid Username or Password for selected role.', 'danger');
             return false;
         }
 
@@ -94,8 +159,8 @@ class AppController {
 
         this.session = {
             id: user.id,
+            username: user.username,
             name: user.name,
-            email: user.email,
             role: role,
             hospital: user.hospital || null,
             phone: user.phone || '0771234567'
@@ -103,21 +168,27 @@ class AppController {
 
         localStorage.setItem('hela_osu_session', JSON.stringify(this.session));
         this.showToast(`Welcome back, ${user.name}!`, 'success');
-        this.applySessionPermissions();
+        
+        setTimeout(() => {
+            if (role === 'admin') window.location.href = 'admin.html';
+            else if (role === 'doctor') window.location.href = 'doctor.html';
+            else window.location.href = 'patient.html';
+        }, 400);
         return true;
     }
 
     registerPatient(formData) {
         const data = window.dbStore.get();
-        if (data.patients.some(p => p.email.toLowerCase() === formData.email.toLowerCase())) {
-            this.showToast('Email address already registered.', 'warning');
+        if (data.patients.some(p => p.username.toLowerCase() === formData.username.toLowerCase())) {
+            this.showToast('Username already taken. Please choose another.', 'warning');
             return;
         }
 
         const newPatient = {
             id: 'pat-' + Math.floor(1000 + Math.random() * 9000),
+            username: formData.username.trim().toLowerCase(),
             name: formData.name,
-            email: formData.email,
+            email: formData.email || `${formData.username}@helaosu.lk`,
             password: formData.password,
             phone: formData.phone,
             nic: formData.nic,
@@ -130,26 +201,27 @@ class AppController {
         data.patients.push(newPatient);
         window.dbStore.save(data);
 
-        this.showToast('Patient account created! You can now log in.', 'success');
+        this.showToast('Account created! You can now log in.', 'success');
+        this.setLoginRole('patient');
         this.switchView('view-login');
     }
 
     logout() {
         this.session = null;
         localStorage.removeItem('hela_osu_session');
-        this.showToast('Logged out successfully.', 'info');
-        this.applySessionPermissions();
-        this.switchView('view-login');
+        window.location.href = 'login.html';
     }
 
     applySessionPermissions() {
         const session = this.session;
-        const navLinks = document.querySelectorAll('.nav-link');
-        const userHeaderArea = document.getElementById('userHeaderArea');
+        const currentPage = this.getCurrentPageName();
 
         if (!session) {
-            // Unauthenticated state
-            navLinks.forEach(l => l.style.display = 'none');
+            if (currentPage !== 'login.html' && currentPage !== 'index.html') {
+                window.location.href = 'login.html';
+                return;
+            }
+            const userHeaderArea = document.getElementById('userHeaderArea');
             if (userHeaderArea) {
                 userHeaderArea.innerHTML = `
                     <button class="btn btn-outline btn-sm" onclick="app.switchView('view-login')">Login</button>
@@ -159,20 +231,30 @@ class AppController {
             return;
         }
 
-        // Authenticated state
         const role = session.role;
 
-        navLinks.forEach(l => {
-            const targetView = l.getAttribute('data-view');
-            if (role === 'patient') {
-                l.style.display = (targetView === 'view-home' || targetView === 'view-bookings' || targetView === 'view-consultation') ? 'flex' : 'none';
-            } else if (role === 'doctor') {
-                l.style.display = (targetView === 'view-doctor') ? 'flex' : 'none';
-            } else if (role === 'admin') {
-                l.style.display = (targetView === 'view-admin') ? 'flex' : 'none';
-            }
-        });
+        // Redirect if on wrong page for active session role
+        if (currentPage === 'login.html' || currentPage === 'index.html') {
+            if (role === 'admin') window.location.href = 'admin.html';
+            else if (role === 'doctor') window.location.href = 'doctor.html';
+            else window.location.href = 'patient.html';
+            return;
+        }
 
+        if (currentPage === 'admin.html' && role !== 'admin') {
+            window.location.href = (role === 'doctor') ? 'doctor.html' : 'patient.html';
+            return;
+        }
+        if (currentPage === 'doctor.html' && role !== 'doctor') {
+            window.location.href = (role === 'admin') ? 'admin.html' : 'patient.html';
+            return;
+        }
+        if (currentPage === 'patient.html' && role !== 'patient') {
+            window.location.href = (role === 'admin') ? 'admin.html' : 'doctor.html';
+            return;
+        }
+
+        const userHeaderArea = document.getElementById('userHeaderArea');
         if (userHeaderArea) {
             userHeaderArea.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -186,15 +268,12 @@ class AppController {
             `;
         }
 
-        // Redirect to appropriate home view for role
+        // Render portal views
         if (role === 'admin') {
-            this.switchView('view-admin');
-            window.adminController.renderAdminDashboard();
+            if (window.adminController) window.adminController.renderAdminDashboard();
         } else if (role === 'doctor') {
-            this.switchView('view-doctor');
             this.renderDoctorPortal();
         } else {
-            this.switchView('view-home');
             this.renderDoctorsGrid();
             this.renderPatientBookings();
             this.renderReportConsultations();
@@ -202,12 +281,16 @@ class AppController {
     }
 
     switchView(viewId) {
-        // Enforce strict security access guard
+        const navLinks = document.querySelectorAll('.nav-link');
+        if (viewId === 'view-login' || viewId === 'view-register' || !this.session) {
+            navLinks.forEach(l => l.style.display = 'none');
+        }
+
         if (!this.canAccessView(viewId)) {
-            this.showToast('Access denied! You do not have permission for this portal.', 'danger');
+            this.showToast('Access denied! Please log in with valid credentials.', 'danger');
             if (this.session) {
-                if (this.session.role === 'admin') viewId = 'view-admin';
-                else if (this.session.role === 'doctor') viewId = 'view-doctor';
+                if (this.session.role === 'admin') viewId = 'view-admin-dashboard';
+                else if (this.session.role === 'doctor') viewId = 'view-doctor-queue';
                 else viewId = 'view-home';
             } else {
                 viewId = 'view-login';
@@ -226,6 +309,13 @@ class AppController {
         if (activeLink) {
             activeLink.classList.add('active');
         }
+
+        // Trigger dynamic tab contents when switched
+        if (viewId.startsWith('view-admin')) {
+            window.adminController.renderAdminDashboard();
+        } else if (viewId.startsWith('view-doctor')) {
+            this.renderDoctorPortal();
+        }
     }
 
     canAccessView(viewId) {
@@ -237,10 +327,10 @@ class AppController {
             return (viewId === 'view-home' || viewId === 'view-bookings' || viewId === 'view-consultation');
         }
         if (role === 'doctor') {
-            return (viewId === 'view-doctor');
+            return (viewId === 'view-doctor-queue' || viewId === 'view-doctor-reports' || viewId === 'view-doctor-history');
         }
         if (role === 'admin') {
-            return (viewId === 'view-admin');
+            return (viewId === 'view-admin-dashboard' || viewId === 'view-admin-doctors' || viewId === 'view-admin-patients' || viewId === 'view-admin-appointments');
         }
         return false;
     }
@@ -254,7 +344,6 @@ class AppController {
         if (!grid) return;
 
         const data = window.dbStore.get();
-        // ONLY show doctors who work at Hela Osu Weda Gedara!
         const helaOsuDocs = data.doctors.filter(d => d.status === 'approved' && d.hospital.includes('Hela Osu Weda Gedara'));
         const docs = filteredList || helaOsuDocs;
 
@@ -326,6 +415,7 @@ class AppController {
     openBookingModal(docId) {
         if (!this.session || this.session.role !== 'patient') {
             this.showToast('Please log in as a Patient to book appointments.', 'warning');
+            this.setLoginRole('patient');
             this.switchView('view-login');
             return;
         }
@@ -599,7 +689,6 @@ class AppController {
                         </button>
                     ` : ''}
                     ${ap.status === 'Upcoming' ? `
-                        <button class="btn btn-sm btn-outline" onclick="app.rescheduleAppointment('${ap.id}')">Reschedule</button>
                         <button class="btn btn-sm" style="background: #fee2e2; color: #dc2626;" onclick="app.cancelAppointment('${ap.id}')">Cancel</button>
                     ` : ''}
                     ${ap.status === 'Completed' ? `
@@ -754,60 +843,94 @@ class AppController {
     // -------------------------------------------------------------------------
 
     renderDoctorPortal() {
-        const tbody = document.getElementById('doctorQueueTableBody');
-        if (!tbody || !this.session || this.session.role !== 'doctor') return;
-
+        if (!this.session || this.session.role !== 'doctor') return;
         const data = window.dbStore.get();
-        const myQueue = data.appointments.filter(a => a.doctorId === this.session.id || a.doctorId === 'doc-101');
+        
+        // Update doctor profile header name
+        const docNameElem = document.getElementById('docPortalName');
+        if (docNameElem) docNameElem.textContent = this.session.name;
 
-        tbody.innerHTML = myQueue.map(ap => `
-            <tr>
-                <td><strong>Token #${ap.tokenNo}</strong></td>
-                <td>${ap.patientName}<br><span style="font-size: 0.8rem; color: #64748b;">Ph: ${ap.patientPhone}</span></td>
-                <td>${ap.date} | ${ap.timeSlot}</td>
-                <td>${ap.notes}</td>
-                <td>
-                    <span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; background: ${
-                        ap.status === 'Completed' ? '#dcfce7; color: #15803d;' : '#fef3c7; color: #b45309;'
-                    }">${ap.status}</span>
-                </td>
-                <td>
-                    ${ap.status !== 'Completed' ? `
-                        <button class="btn btn-sm btn-primary" onclick="app.openPrescriptionModal('${ap.id}')">
-                            <i class="fa-solid fa-stethoscope"></i> Complete & Prescribe
-                        </button>
-                    ` : `
-                        <button class="btn btn-sm btn-outline" onclick="app.viewPrescription('${ap.id}')">
-                            View Rx
-                        </button>
-                    `}
-                </td>
-            </tr>
-        `).join('');
+        // Render Session Queue Table
+        const tbodyQueue = document.getElementById('doctorQueueTableBody');
+        if (tbodyQueue) {
+            const myQueue = data.appointments.filter(a => a.doctorId === this.session.id || a.doctorId === 'doc-101');
+            tbodyQueue.innerHTML = myQueue.map(ap => `
+                <tr>
+                    <td><strong>Token #${ap.tokenNo}</strong></td>
+                    <td>${ap.patientName}<br><span style="font-size: 0.8rem; color: #64748b;">Ph: ${ap.patientPhone}</span></td>
+                    <td>${ap.date} | ${ap.timeSlot}</td>
+                    <td>${ap.notes}</td>
+                    <td>
+                        <span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; background: ${
+                            ap.status === 'Completed' ? '#dcfce7; color: #15803d;' : '#fef3c7; color: #b45309;'
+                        }">${ap.status}</span>
+                    </td>
+                    <td>
+                        ${ap.status !== 'Completed' ? `
+                            <button class="btn btn-sm btn-primary" onclick="app.openPrescriptionModal('${ap.id}')">
+                                <i class="fa-solid fa-stethoscope"></i> Complete & Prescribe
+                            </button>
+                        ` : `
+                            <button class="btn btn-sm btn-outline" onclick="app.viewPrescription('${ap.id}')">
+                                View Rx
+                            </button>
+                        `}
+                    </td>
+                </tr>
+            `).join('');
+        }
 
+        // Render Received Patient Reports Inbox
         const docMsgContainer = document.getElementById('doctorReportInbox');
         if (docMsgContainer) {
             const pendingReports = data.reportConsultations.filter(c => c.doctorId === this.session.id || c.doctorId === 'doc-101');
-            docMsgContainer.innerHTML = pendingReports.map(c => `
-                <div style="background: white; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 8px; margin-bottom: 0.75rem;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <strong>Patient: ${c.patientName}</strong>
-                        <span style="font-size: 0.8rem; color: #64748b;">${c.submittedAt}</span>
+            if (pendingReports.length === 0) {
+                docMsgContainer.innerHTML = `<p style="color: #64748b;">No patient reports received yet.</p>`;
+            } else {
+                docMsgContainer.innerHTML = pendingReports.map(c => `
+                    <div style="background: white; border: 1px solid #e2e8f0; padding: 1.25rem; border-radius: 10px; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                            <strong>Patient: ${c.patientName}</strong>
+                            <span style="font-size: 0.8rem; color: #64748b;">${c.submittedAt}</span>
+                        </div>
+                        <p style="font-size: 0.85rem; color: #0d7a5f; font-weight: 600; margin-bottom: 0.4rem;">📄 Document: ${c.reportFileName}</p>
+                        <p style="font-size: 0.9rem; color: #334155; margin-bottom: 0.5rem;">"<strong>Patient Note:</strong> ${c.patientMessage}"</p>
+                        ${c.doctorReply ? `
+                            <div style="background: #f1f5f9; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; border-left: 3px solid #0d7a5f;">
+                                <strong>Your Sent Advice:</strong> ${c.doctorReply}
+                            </div>
+                        ` : `
+                            <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
+                                <input type="text" id="replyInput-${c.id}" placeholder="Type medical advice for patient..." style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;" />
+                                <button class="btn btn-sm btn-primary" onclick="app.replyToReport('${c.id}')">Send Feedback</button>
+                            </div>
+                        `}
                     </div>
-                    <p style="font-size: 0.85rem; color: #0d7a5f; margin: 0.25rem 0;">📄 File: ${c.reportFileName}</p>
-                    <p style="font-size: 0.9rem; color: #334155;">"${c.patientMessage}"</p>
-                    ${c.doctorReply ? `
-                        <div style="background: #f1f5f9; padding: 0.5rem; border-radius: 6px; margin-top: 0.5rem; font-size: 0.85rem;">
-                            <strong>Your Reply:</strong> ${c.doctorReply}
-                        </div>
-                    ` : `
-                        <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
-                            <input type="text" id="replyInput-${c.id}" placeholder="Write advice/reply..." style="flex: 1; padding: 0.4rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;" />
-                            <button class="btn btn-sm btn-primary" onclick="app.replyToReport('${c.id}')">Send Reply</button>
-                        </div>
-                    `}
-                </div>
-            `).join('');
+                `).join('');
+            }
+        }
+
+        // Render Prescription History Table
+        const tbodyRxHistory = document.getElementById('doctorPrescriptionHistoryTable');
+        if (tbodyRxHistory) {
+            const completedAps = data.appointments.filter(a => (a.doctorId === this.session.id || a.doctorId === 'doc-101') && a.prescription);
+            if (completedAps.length === 0) {
+                tbodyRxHistory.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b;">No prescription history recorded yet.</td></tr>`;
+            } else {
+                tbodyRxHistory.innerHTML = completedAps.map(ap => `
+                    <tr>
+                        <td><strong>${ap.id}</strong></td>
+                        <td>${ap.patientName}</td>
+                        <td>${ap.prescription.issuedDate || ap.date}</td>
+                        <td>${ap.prescription.diagnosis}</td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="app.viewPrescription('${ap.id}')">
+                                <i class="fa-solid fa-file-prescription"></i> View / Print Rx
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
         }
     }
 
