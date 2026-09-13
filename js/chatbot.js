@@ -52,11 +52,11 @@ class ChatbotWidget {
         const docs = data.doctors.filter(d => d.hospital.includes('Hela Osu Weda Gedara'));
 
         if (query.includes('hello') || query.includes('ayubowan') || query.includes('hi')) {
-            return 'Ayubowan! You can channel our Wedamahatayas across Colombo, Kandy, Galle, Kurunegala, and Gampaha branches!';
+            return 'Ayubowan! You can channel our senior Wedamahatayas at our flagship Galle Medical Center (No. 88, Main Street, Galle)!';
         }
 
         if (query.includes('ayurveda') || query.includes('weda') || query.includes('herb')) {
-            return `Dr. Deshabandu Wickramasinghe (Colombo 07) and Dr. Anura Jayawardena (Kandy) are available for Ayurvedic consultations!`;
+            return `Senior Wedamahatayas including Dr. Deshabandu Wickramasinghe and Dr. Anura Jayawardena are available for consultations at our Galle Branch!`;
         }
 
         if (query.includes('cancel') || query.includes('reschedule')) {

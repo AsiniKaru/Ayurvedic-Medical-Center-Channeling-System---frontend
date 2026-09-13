@@ -27,7 +27,7 @@
     <!-- Sticky Navigation Bar -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="admin.html" class="brand-logo">
+            <a href="index.html" class="brand-logo">
                 <div class="brand-logo-icon">🌿</div>
                 <div>
                     <span data-i18n="brandName">Hela Osu Weda Gedara</span>
@@ -37,6 +37,9 @@
 
             <!-- Admin Nav Links -->
             <ul class="nav-links" id="mainNavLinks">
+                <li class="nav-link" onclick="window.location.href='index.html'">
+                    <i class="fa-solid fa-hospital"></i> <span>Main Dashboard</span>
+                </li>
                 <li class="nav-link role-admin-link active" data-view="view-admin-dashboard" id="navLinkAdminDash">
                     <i class="fa-solid fa-chart-line"></i> <span>Dashboard & Analytics</span>
                 </li>
@@ -271,6 +274,19 @@
     <script src="js/chatbot.js"></script>
     <script src="js/admin.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        console.log("Testing Backend Connection with JWT...");
+
+        // Test calling secured endpoints
+        const rooms = await apiRequest("/rooms/getAll");
+        console.log("Rooms from DB:", rooms);
+
+        const specializations = await apiRequest("/specializations/getAll");
+        console.log("Specializations from DB:", specializations);
+    });
+    </script>
 
 </body>
 </html>

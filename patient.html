@@ -24,7 +24,7 @@
     <!-- Sticky Navigation Bar -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="patient.html" class="brand-logo">
+            <a href="index.html" class="brand-logo">
                 <div class="brand-logo-icon">🌿</div>
                 <div>
                     <span data-i18n="brandName">Hela Osu Weda Gedara</span>
@@ -34,8 +34,11 @@
 
             <!-- Patient Nav Links -->
             <ul class="nav-links" id="mainNavLinks">
+                <li class="nav-link" onclick="window.location.href='index.html'">
+                    <i class="fa-solid fa-hospital"></i> <span>Main Dashboard</span>
+                </li>
                 <li class="nav-link role-patient-link active" data-view="view-home" id="navLinkHome">
-                    <i class="fa-solid fa-house"></i> <span data-i18n="navHome">Home</span>
+                    <i class="fa-solid fa-house"></i> <span data-i18n="navHome">Channel Doctors</span>
                 </li>
                 <li class="nav-link role-patient-link" data-view="view-bookings" id="navLinkBookings">
                     <i class="fa-solid fa-calendar-days"></i> <span data-i18n="navBookings">My Bookings</span>
@@ -145,10 +148,10 @@
                             <div style="margin-bottom: 1rem;">
                                 <label style="font-weight: 600; font-size: 0.9rem;">Select Hela Osu Doctor</label>
                                 <select id="rcDocSelect" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;">
-                                    <option value="doc-101">Dr. Deshabandu Wickramasinghe (Colombo 07)</option>
-                                    <option value="doc-102">Dr. Anura Jayawardena (Kandy)</option>
-                                    <option value="doc-103">Dr. Nilmini Fernando (Galle)</option>
-                                    <option value="doc-104">Dr. Chaminda Bandara (Kurunegala)</option>
+                                    <option value="doc-101">Dr. Deshabandu Wickramasinghe (Galle Branch)</option>
+                                    <option value="doc-102">Dr. Anura Jayawardena (Galle Branch)</option>
+                                    <option value="doc-103">Dr. Nilmini Fernando (Galle Branch)</option>
+                                    <option value="doc-104">Dr. Chaminda Bandara (Galle Branch)</option>
                                 </select>
                             </div>
 

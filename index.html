@@ -3,33 +3,448 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hela Osu Weda Gedara Channeling System</title>
-    <script>
-        (function() {
-            try {
-                var session = JSON.parse(localStorage.getItem('hela_osu_session'));
-                if (session && session.role) {
-                    if (session.role === 'admin') {
-                        window.location.replace('admin.html');
-                    } else if (session.role === 'doctor') {
-                        window.location.replace('doctor.html');
-                    } else {
-                        window.location.replace('patient.html');
-                    }
-                } else {
-                    window.location.replace('login.html');
-                }
-            } catch(e) {
-                window.location.replace('login.html');
-            }
-        })();
-    </script>
+    <title>Hela Osu Weda Gedara | Doctor Channeling & Medical Dashboard</title>
+    <meta name="description" content="Official Doctor Channeling & Medical Portal for Hela Osu Weda Gedara centers across Sri Lanka. Channel specialists, view vouchers, and consult online.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Noto+Sans+Sinhala:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet OpenStreetMap CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Custom Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
 </head>
-<body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #475569;">
-    <div style="text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">🌿</div>
-        <h2>Loading Hela Osu Weda Gedara...</h2>
-        <p>Redirecting to your portal...</p>
+<body style="min-height: 100vh; display: flex; flex-direction: column;">
+
+    <!-- TOP ANNOUNCEMENT & HOTLINE BAR -->
+    <div class="top-announcement-bar">
+        <div class="container top-bar-flex">
+            <div class="top-bar-items">
+                <span class="top-bar-item"><i class="fa-solid fa-phone-volume text-amber-400"></i> Emergency Hotline: <strong class="top-bar-highlight">1390</strong></span>
+                <span class="top-bar-item"><i class="fa-solid fa-clock"></i> 24/7 Channeling & OPD Consultation</span>
+                <span class="top-bar-item"><i class="fa-solid fa-location-dot"></i> Flagship Galle Medical Center</span>
+            </div>
+            <div class="top-bar-items">
+                <!-- Multi-Language Switcher -->
+                <select id="langSelect" style="padding: 0.2rem 0.5rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(0,0,0,0.3); color: white; font-weight: 600; font-size: 0.8rem; outline: none; cursor: pointer;" onchange="window.i18n.setLanguage(this.value)">
+                    <option value="en" style="color: #0f172a;">🌐 English</option>
+                    <option value="si" style="color: #0f172a;">🇱🇰 සිංහල</option>
+                    <option value="ta" style="color: #0f172a;">🇱🇰 தமிழ்</option>
+                </select>
+            </div>
+        </div>
     </div>
+
+    <!-- STICKY NAVBAR -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="index.html" class="brand-logo">
+                <div class="brand-logo-icon">🌿</div>
+                <div>
+                    <span data-i18n="brandName">Hela Osu Weda Gedara</span>
+                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 500; text-transform: uppercase;" data-i18n="tagline">Ayurvedic Medical Centers</div>
+                </div>
+            </a>
+
+            <!-- Navigation Links -->
+            <ul class="nav-links">
+                <li class="nav-link active" onclick="window.location.href='index.html'">
+                    <i class="fa-solid fa-house"></i> <span>Home</span>
+                </li>
+                <li class="nav-link" onclick="document.getElementById('channelingSection').scrollIntoView({behavior:'smooth'})">
+                    <i class="fa-solid fa-user-doctor"></i> <span>Channeling</span>
+                </li>
+                <li class="nav-link" onclick="document.getElementById('packagesSection').scrollIntoView({behavior:'smooth'})">
+                    <i class="fa-solid fa-box-tissue"></i> <span>Wellness Packages</span>
+                </li>
+                <li class="nav-link" onclick="document.getElementById('branchesSection').scrollIntoView({behavior:'smooth'})">
+                    <i class="fa-solid fa-hospital"></i> <span>Branches</span>
+                </li>
+            </ul>
+
+            <div class="nav-controls">
+                <!-- User Header Session Area -->
+                <div id="userHeaderArea">
+                    <a href="login.html" class="btn btn-primary btn-sm" style="border-radius: 24px; padding: 0.5rem 1.25rem; font-weight: 700; font-size: 0.88rem; background: linear-gradient(135deg, #1b5353, #2D8181); border: none; color: white; box-shadow: 0 4px 14px rgba(45, 129, 129, 0.35); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-right-to-bracket"></i> Login / Sign Up
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main style="flex: 1;">
+
+        <!-- 1. HERO & NAWALOKA-STYLE CHANNELING BAR -->
+        <section class="hero-section" style="margin-bottom: 0;">
+            <div class="container hero-content">
+                <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 0.4rem 1rem; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2); margin-bottom: 1rem; font-size: 0.85rem; font-weight: 600;">
+                    <span>✨ Sri Lanka's Trusted Heritage Medical Network</span>
+                </div>
+                <h1 class="hero-title">Channel Specialist Wedamahatayas Online</h1>
+                <p class="hero-subtitle">Instantly book appointments, consult with senior Ayurvedic specialists, and access care across all Hela Osu Weda Gedara centers.</p>
+                
+                <!-- NAWALOKA CHANNELING WIDGET -->
+                <div class="channeling-hero-box">
+                    <div class="channeling-grid-inputs">
+                        <div class="input-field-wrap">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="heroSearchInput" placeholder="Doctor name, condition..." />
+                        </div>
+
+                        <div class="input-field-wrap">
+                            <i class="fa-solid fa-stethoscope"></i>
+                            <select id="heroSpecSelect">
+                                <option value="all">All Hela Specializations</option>
+                                <option value="Ayurveda">Ayurveda & Weda Kam</option>
+                                <option value="Wellness">Ayurvedic Wellness & Vitality</option>
+                                <option value="Pediatrics">Pediatrics (Bala Roga)</option>
+                                <option value="Spine">Spine & Joint Rehabilitation</option>
+                                <option value="Dermatology">Dermatology & Skin Care</option>
+                            </select>
+                        </div>
+
+                        <div class="input-field-wrap">
+                            <i class="fa-solid fa-hospital"></i>
+                            <select id="heroBranchSelect" onchange="app.filterDoctors()">
+                                <option value="Galle">Galle Medical Branch (Main Center)</option>
+                            </select>
+                        </div>
+
+                        <div class="input-field-wrap">
+                            <i class="fa-solid fa-calendar-day"></i>
+                            <input type="date" id="heroDateInput" value="${new Date().toISOString().split('T')[0]}" />
+                        </div>
+
+                        <button class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-size: 1rem; border-radius: 12px;" onclick="app.filterDoctors()">
+                            <i class="fa-solid fa-search"></i> Search Doctor
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. QUICK HOSPITAL SERVICES GRID -->
+        <div class="container">
+            <div class="quick-services-grid">
+                <div class="service-card" onclick="document.getElementById('channelingSection').scrollIntoView({behavior:'smooth'})">
+                    <div class="service-icon"><i class="fa-solid fa-user-doctor"></i></div>
+                    <div class="service-title">Channel Doctor</div>
+                    <div class="service-sub">50+ Wedamahatayas</div>
+                </div>
+
+                <div class="service-card" onclick="alert('Emergency Hotline 1390 available 24/7 for medical assistance!')">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #fef2f2, #fee2e2); color: #dc2626;"><i class="fa-solid fa-phone-volume"></i></div>
+                    <div class="service-title">Hotline 1390</div>
+                    <div class="service-sub">24/7 Emergency</div>
+                </div>
+
+                <div class="service-card" onclick="app.session && app.session.role === 'patient' ? window.location.href='patient.html' : app.openQuickLoginModal('patient')">
+                    <div class="service-icon"><i class="fa-solid fa-file-medical"></i></div>
+                    <div class="service-title">Report Advice</div>
+                    <div class="service-sub">Online Scan Reviews</div>
+                </div>
+
+                <div class="service-card" onclick="document.getElementById('packagesSection').scrollIntoView({behavior:'smooth'})">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #fffbeb, #fef3c7); color: #d97706;"><i class="fa-solid fa-spa"></i></div>
+                    <div class="service-title">Panchakarma</div>
+                    <div class="service-sub">Detox & Healing</div>
+                </div>
+
+                <div class="service-card" onclick="app.session && app.session.role === 'patient' ? window.location.href='patient.html' : app.openQuickLoginModal('patient')">
+                    <div class="service-icon"><i class="fa-solid fa-prescription-bottle-medical"></i></div>
+                    <div class="service-title">E-Prescriptions</div>
+                    <div class="service-sub">Digital Vouchers</div>
+                </div>
+
+                <div class="service-card" onclick="document.getElementById('branchesSection').scrollIntoView({behavior:'smooth'})">
+                    <div class="service-icon"><i class="fa-solid fa-clinic-medical"></i></div>
+                    <div class="service-title">Our Centers</div>
+                    <div class="service-sub">10 Islandwide Locations</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. AYURVEDIC TREATMENT & CHANNEL DOCTOR SERVICES (NAWALOKA STYLE) -->
+        <section id="treatmentSection" class="container">
+            <div class="treatment-services-section">
+                <div class="treatment-services-grid">
+                    <div>
+                        <h2 class="treatment-heading">Treatment & Channel Doctor Services</h2>
+                        <div class="treatment-line-accent"></div>
+
+                        <p class="treatment-desc">
+                            Welcome to Hela Osu Weda Gedara, widely recognized as the best private Ayurvedic medical center network in Sri Lanka for advanced medical treatment, trusted specialists, and world-class facilities.
+                        </p>
+                        <p class="treatment-desc">
+                            Located in the heart of major cities across Sri Lanka, we offer fast access to expert consultants, modern diagnostics, and safe, patient-focused treatment, whether you are a local resident or an international patient.
+                        </p>
+                        <p class="treatment-desc">
+                            If you're looking to channel a doctor in Sri Lanka, receive prompt treatment, or plan a medical visit with confidence, Hela Osu Weda Gedara is your trusted choice.
+                        </p>
+
+                        <div class="treatment-btn-group">
+                            <a href="login.html" class="btn-channel-now">
+                                Channel a Doctor Now
+                            </a>
+                            <button class="btn-enquire-now" onclick="document.getElementById('packagesSection').scrollIntoView({behavior:'smooth'})">
+                                Enquire Now
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="treatment-image-wrap">
+                        <div class="treatment-image-bg-glow"></div>
+                        <img src="images/hospital-building.png" alt="Hela Osu Weda Gedara Hospital Building" class="treatment-building-img" />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. IMPACT STATISTICS BAR -->
+        <div class="container">
+            <div class="impact-stats-bar">
+                <div class="stat-box-item">
+                    <div class="stat-number" id="statTotalDoctors">50+</div>
+                    <div class="stat-title">Senior Wedamahatayas</div>
+                </div>
+                <div class="stat-box-item">
+                    <div class="stat-number" id="statTotalPatients">15,000+</div>
+                    <div class="stat-title">Patients Treated</div>
+                </div>
+                <div class="stat-box-item">
+                    <div class="stat-number" id="statTotalAppointments">25,000+</div>
+                    <div class="stat-title">Channeling Sessions</div>
+                </div>
+                <div class="stat-box-item">
+                    <div class="stat-number">4.9 ★</div>
+                    <div class="stat-title">Patient Rating</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. DOCTOR DIRECTORY SECTION -->
+        <section id="channelingSection" class="container" style="margin-bottom: 3.5rem;">
+            <div class="section-title-wrap">
+                <div>
+                    <h2 class="section-title">
+                        <i class="fa-solid fa-user-doctor" style="color: var(--primary);"></i> Wedamahataya Doctor Directory
+                    </h2>
+                    <p style="color: var(--gray-500); font-weight: 500; margin-top: 0.2rem;">Select a specialist to view availability and book channeling slots</p>
+                </div>
+            </div>
+
+            <div id="doctorsGrid" class="doctors-grid">
+                <!-- Rendered dynamically via app.renderDoctorsGrid() -->
+            </div>
+        </section>
+
+        <!-- 6. SPECIALIZED HEALTH & WELLNESS PACKAGES -->
+        <section id="packagesSection" class="container">
+            <div class="section-title-wrap">
+                <div>
+                    <h2 class="section-title">
+                        <i class="fa-solid fa-spa" style="color: var(--primary);"></i> Ayurvedic Health & Wellness Packages
+                    </h2>
+                    <p style="color: var(--gray-500); font-weight: 500; margin-top: 0.2rem;">Comprehensive holistic treatment plans crafted by master practitioners</p>
+                </div>
+            </div>
+
+            <div class="packages-grid">
+                <div class="package-card">
+                    <div class="package-header" style="background: linear-gradient(135deg, #15803d, #16a34a);">
+                        <span class="package-badge">Popular Detox</span>
+                        <h3 style="color: white; font-size: 1.25rem;">Panchakarma Detox Therapy</h3>
+                        <p style="font-size: 0.85rem; color: rgba(255,255,255,0.85);">Complete body cleansing and digestive rejuvenation</p>
+                        <div class="package-price">Rs. 15,000</div>
+                    </div>
+                    <div class="package-body">
+                        <ul class="package-features">
+                            <li><i class="fa-solid fa-check"></i> Full Body Herbal Oil Abhyanga Massage</li>
+                            <li><i class="fa-solid fa-check"></i> Swedana Herbal Steam Therapy</li>
+                            <li><i class="fa-solid fa-check"></i> Pulse Diagnosis & Dietary Consultation</li>
+                            <li><i class="fa-solid fa-check"></i> 7-Day Herbal Medicine Supply</li>
+                        </ul>
+                        <button class="btn btn-outline" style="width: 100%; margin-top: 1.5rem; border-color: #16a34a; color: #16a34a;" onclick="app.openQuickLoginModal('patient')">Inquire Package</button>
+                    </div>
+                </div>
+
+                <div class="package-card">
+                    <div class="package-header" style="background: linear-gradient(135deg, #0d9488, #14b8a6);">
+                        <span class="package-badge">Spine & Joint</span>
+                        <h3 style="color: white; font-size: 1.25rem;">Kadu Weda Joint Realignment</h3>
+                        <p style="font-size: 0.85rem; color: rgba(255,255,255,0.85);">Traditional vertebral & spinal compression care</p>
+                        <div class="package-price">Rs. 18,500</div>
+                    </div>
+                    <div class="package-body">
+                        <ul class="package-features">
+                            <li><i class="fa-solid fa-check"></i> Vertebral Realignment Assessment</li>
+                            <li><i class="fa-solid fa-check"></i> Kizhi Herbal Poultice Therapy</li>
+                            <li><i class="fa-solid fa-check"></i> Joint Stiffness Reduction Oil Treatment</li>
+                            <li><i class="fa-solid fa-check"></i> Follow-up Wedamahataya Consultation</li>
+                        </ul>
+                        <button class="btn btn-outline" style="width: 100%; margin-top: 1.5rem; border-color: #0d9488; color: #0d9488;" onclick="app.openQuickLoginModal('patient')">Inquire Package</button>
+                    </div>
+                </div>
+
+                <div class="package-card">
+                    <div class="package-header" style="background: linear-gradient(135deg, #65a30d, #84cc16);">
+                        <span class="package-badge">Vitality & Immunity</span>
+                        <h3 style="color: white; font-size: 1.25rem;">Rasayana Vitality & Immunity</h3>
+                        <p style="font-size: 0.85rem; color: rgba(255,255,255,0.85);">Natural immune booster and stress relief program</p>
+                        <div class="package-price">Rs. 12,000</div>
+                    </div>
+                    <div class="package-body">
+                        <ul class="package-features">
+                            <li><i class="fa-solid fa-check"></i> Shirodhara Head Warm Oil Therapy</li>
+                            <li><i class="fa-solid fa-check"></i> Natural Herbal Elixir & Rasayana Tonics</li>
+                            <li><i class="fa-solid fa-check"></i> Stress & Sleep Pattern Evaluation</li>
+                            <li><i class="fa-solid fa-check"></i> Personal Lifestyle Guidance Plan</li>
+                        </ul>
+                        <button class="btn btn-outline" style="width: 100%; margin-top: 1.5rem; border-color: #65a30d; color: #65a30d;" onclick="app.openQuickLoginModal('patient')">Inquire Package</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. MEDICAL CENTER BRANCHES SHOWCASE -->
+        <section id="branchesSection" class="container" style="margin-bottom: 4rem;">
+            <div class="section-title-wrap">
+                <div>
+                    <h2 class="section-title">
+                        <i class="fa-solid fa-hospital" style="color: var(--primary);"></i> Hela Osu Weda Gedara Hospital Location
+                    </h2>
+                    <p style="color: var(--gray-500); font-weight: 500; margin-top: 0.2rem;">Visit our medical center in Galle for OPD consultations, channeling, and herbal pharmacy services</p>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; align-items: stretch;">
+                <!-- GALLE BRANCH DETAIL CARD -->
+                <div class="branch-card" style="margin: 0; background: linear-gradient(145deg, #ffffff, #f8fafc); border: 2px solid var(--primary); padding: 1.75rem; border-radius: 20px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 10px 25px rgba(45, 129, 129, 0.08);">
+                    <div>
+                        <div style="display: inline-block; background: #e6f4f1; color: var(--primary); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.35rem 0.85rem; border-radius: 20px; margin-bottom: 1rem;">
+                            🏥 Galle Medical Center
+                        </div>
+                        <h3 style="font-size: 1.4rem; color: #0f172a; margin-bottom: 0.75rem; font-weight: 800;">Galle Medical Branch</h3>
+                        <div style="font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 0.75rem;">
+                            <i class="fa-solid fa-location-dot" style="color: var(--primary); margin-right: 0.5rem;"></i> No. 88, Main Street, Galle, Sri Lanka
+                        </div>
+                        <div style="font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 0.75rem;">
+                            <i class="fa-solid fa-phone" style="color: var(--primary); margin-right: 0.5rem;"></i> +94 91 224 5678 / +94 91 224 5679
+                        </div>
+                        <div style="font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 0.75rem;">
+                            <i class="fa-solid fa-envelope" style="color: var(--primary); margin-right: 0.5rem;"></i> galle@helaosu.lk
+                        </div>
+                        <div style="font-size: 0.9rem; color: #64748b; line-height: 1.5; background: #f1f5f9; padding: 0.85rem; border-radius: 12px; margin-top: 0.5rem;">
+                            <i class="fa-solid fa-clock" style="color: var(--primary);"></i> <strong>Hours:</strong> Open 24/7 for OPD & Emergency Channeling.
+                        </div>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <button class="btn btn-primary" style="width: 100%; border-radius: 12px; padding: 0.75rem;" onclick="document.getElementById('channelingSection').scrollIntoView({behavior:'smooth'})">
+                            <i class="fa-solid fa-calendar-check"></i> Book Doctor at Galle
+                        </button>
+                    </div>
+                </div>
+
+                <!-- INTERACTIVE MAP CONTAINER -->
+                <div style="position: relative; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 2px solid var(--primary); height: 380px; background: #f8fafc;">
+                    <iframe 
+                        id="galleMapIframe"
+                        width="100%" 
+                        height="380" 
+                        style="border: 0; width: 100%; height: 380px; border-radius: 20px;" 
+                        src="https://maps.google.com/maps?q=6.0535,80.2210&hl=en&z=15&output=embed" 
+                        allowfullscreen="" 
+                        loading="lazy" 
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer style="background: #0f172a; color: white; padding: 3rem 0 1.5rem 0; border-top: 3px solid var(--primary);">
+        <div class="container" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2rem; border-bottom: 1px solid #334155; padding-bottom: 2rem;">
+            <div style="max-width: 420px;">
+                <h3 style="color: white; margin-bottom: 0.5rem;">🌿 Hela Osu Weda Gedara</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.5;">Connecting Sri Lanka with trusted Wedamahataya specialists and modern Ayurvedic medical centers across the island.</p>
+            </div>
+            <div>
+                <h4 style="color: white; margin-bottom: 0.75rem; font-size: 1rem;">Quick Navigation</h4>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.875rem; color: #cbd5e1;">
+                    <li><a href="index.html" style="color: #cbd5e1;">Home Dashboard</a></li>
+                    <li><a href="login.html" style="color: #cbd5e1;">Patient & Doctor Login</a></li>
+                    <li><a href="admin.html" style="color: #cbd5e1;">Admin Control Panel</a></li>
+                </ul>
+            </div>
+            <div>
+                <p style="font-weight: 600; color: #94a3b8; font-size: 0.9rem;">Emergency Medical Hotline</p>
+                <p style="color: #10b981; font-weight: 800; font-size: 1.35rem; margin-top: 0.2rem;"><i class="fa-solid fa-phone-volume"></i> Hotline 1390</p>
+                <p style="color: #94a3b8; font-size: 0.8rem; margin-top: 0.2rem;">Available 24 Hours a Day</p>
+            </div>
+        </div>
+        <div class="container" style="text-align: center; color: #64748b; font-size: 0.85rem; padding-top: 1.5rem;" data-i18n="footerCopy">
+            © 2026 Hela Osu Weda Gedara Ayurvedic Medical Centers. All Rights Reserved.
+        </div>
+    </footer>
+
+    <!-- GLOBAL MODAL OVERLAY CONTAINER -->
+    <div id="globalModalOverlay" class="modal-overlay">
+        <div id="modalContent" class="modal-container">
+            <!-- Dynamic Modal Content rendered via JS -->
+        </div>
+    </div>
+
+    <!-- FLOATING AI ASSISTANT CHATBOT -->
+    <div class="chatbot-widget">
+        <div id="chatbotBox" class="chatbot-box">
+            <div class="chatbot-header">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fa-solid fa-robot"></i>
+                    <strong>Hela Osu AI Health Assistant</strong>
+                </div>
+                <button style="background: transparent; border: none; color: white; font-size: 1.25rem; cursor: pointer;" onclick="window.chatbot.toggle()">&times;</button>
+            </div>
+            <div id="chatMessagesContainer" class="chatbot-messages">
+                <!-- Messages rendered via JS -->
+            </div>
+            <div class="chatbot-input-area">
+                <input type="text" id="chatInput" placeholder="Ask about Hela doctors or booking..." onkeypress="if(event.key === 'Enter') { window.chatbot.sendMessage(this.value); this.value = ''; }" />
+                <button class="btn btn-primary btn-sm" onclick="const inp = document.getElementById('chatInput'); window.chatbot.sendMessage(inp.value); inp.value = '';">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+        <button class="chatbot-btn" onclick="window.chatbot.toggle()">
+            <i class="fa-solid fa-comment-medical"></i>
+        </button>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Leaflet OpenStreetMap JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- JS MODULE LOADERS -->
+    <script src="js/data.js?v=2"></script>
+    <script src="js/i18n.js?v=2"></script>
+    <script src="js/pdf-generator.js?v=2"></script>
+    <script src="js/charts.js?v=2"></script>
+    <script src="js/chatbot.js?v=2"></script>
+    <script src="js/admin.js?v=2"></script>
+    <script src="js/app.js?v=5"></script>
+
 </body>
 </html>

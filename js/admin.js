@@ -47,7 +47,6 @@ class AdminController {
             <tr>
                 <td>
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <img src="${doc.image}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" />
                         <div>
                             <strong>${doc.name}</strong><br>
                             <span style="font-size: 0.8rem; color: #64748b;">${doc.regNo}</span>

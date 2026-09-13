@@ -20,196 +20,114 @@ class AppController {
             this.bindEvents();
             window.i18n.applyTranslations();
             
+            const currentPage = this.getCurrentPageName();
+            if (currentPage === 'index.html' || currentPage === '' || currentPage === '/') {
+                this.renderDoctorsGrid();
+                this.renderDashboardStats();
+                this.initGalleMap();
+            }
+
             if (this.session) {
                 this.applySessionPermissions();
             } else {
-                this.switchView('view-login');
-                this.setLoginRole('patient');
+                if (currentPage === 'index.html' || currentPage === '' || currentPage === '/') {
+                    this.renderHeaderGuestArea();
+                } else if (currentPage !== 'login.html') {
+                    window.location.href = 'login.html';
+                } else {
+                    this.setLoginRole('patient');
+                }
             }
 
             this.updateNotificationBadge();
         });
 
         window.addEventListener('languageChanged', () => {
+            this.renderDoctorsGrid();
             if (this.session && this.session.role === 'patient') {
-                this.renderDoctorsGrid();
                 this.renderPatientBookings();
             }
         });
     }
 
-    bindEvents() {
-        // Navigation links
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                const targetView = link.getAttribute('data-view');
-                if (targetView) {
-                    this.switchView(targetView);
-                }
-            });
-        });
-
-        // Search inputs
-        const searchInput = document.getElementById('heroSearchInput');
-        const specSelect = document.getElementById('heroSpecSelect');
-        if (searchInput) {
-            searchInput.addEventListener('input', () => this.filterDoctors());
-        }
-        if (specSelect) {
-            specSelect.addEventListener('change', () => this.filterDoctors());
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // AUTHENTICATION & ROLE ACCESS CONTROL
-    // -------------------------------------------------------------------------
-
-    setLoginRole(role) {
-        this.currentLoginRole = role;
-        const titleElem = document.getElementById('loginTitleText');
-        const iconElem = document.getElementById('loginRoleIcon');
-        const roleHiddenInput = document.getElementById('loginRoleInput');
-        const switchButtonsDiv = document.getElementById('loginRoleSwitchButtons');
-        const usernameInput = document.getElementById('loginUsername');
-
-        if (roleHiddenInput) roleHiddenInput.value = role;
-
-        if (role === 'patient') {
-            if (titleElem) titleElem.textContent = 'Patient Login';
-            if (iconElem) iconElem.innerHTML = '👤';
-            if (usernameInput) usernameInput.placeholder = 'e.g. saman';
-            if (switchButtonsDiv) {
-                switchButtonsDiv.innerHTML = `
-                    <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('doctor')">
-                        🩺 Switch to Doctor Login
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('admin')">
-                        ⚙️ Switch to Admin Login
-                    </button>
-                `;
-            }
-        } else if (role === 'doctor') {
-            if (titleElem) titleElem.textContent = 'Doctor (Wedamahataya) Login';
-            if (iconElem) iconElem.innerHTML = '🩺';
-            if (usernameInput) usernameInput.placeholder = 'e.g. dr_wickramasinghe';
-            if (switchButtonsDiv) {
-                switchButtonsDiv.innerHTML = `
-                    <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('patient')">
-                        👤 Switch to Patient Login
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('admin')">
-                        ⚙️ Switch to Admin Login
-                    </button>
-                `;
-            }
-        } else if (role === 'admin') {
-            if (titleElem) titleElem.textContent = 'System Admin Login';
-            if (iconElem) iconElem.innerHTML = '⚙️';
-            if (usernameInput) usernameInput.placeholder = 'e.g. admin';
-            if (switchButtonsDiv) {
-                switchButtonsDiv.innerHTML = `
-                    <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('patient')">
-                        👤 Switch to Patient Login
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('doctor')">
-                        🩺 Switch to Doctor Login
-                    </button>
-                `;
-            }
-        }
-    }
-
     getCurrentPageName() {
         const path = window.location.pathname;
-        const page = path.split('/').pop() || 'index.html';
-        return page.toLowerCase();
+        return path.split('/').pop() || 'index.html';
     }
 
-    login(username, password, role = this.currentLoginRole) {
+    renderHeaderGuestArea() {
+        const userHeaderArea = document.getElementById('userHeaderArea');
+        if (userHeaderArea) {
+            userHeaderArea.innerHTML = `
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="btn btn-primary btn-sm" style="border-radius: 24px; padding: 0.45rem 1.2rem; font-weight: 700; font-size: 0.88rem; background: linear-gradient(135deg, #1e5c5c, #2D8181); border: none; color: white; box-shadow: 0 4px 12px rgba(45, 129, 129, 0.35);" onclick="window.location.href='login.html'">
+                        <i class="fa-solid fa-right-to-bracket"></i> Login / Sign Up
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    renderDashboardStats() {
         const data = window.dbStore.get();
-        let user = null;
-
-        const cleanUser = username.trim().toLowerCase();
-
-        if (role === 'patient') {
-            user = data.patients.find(p => p.username.toLowerCase() === cleanUser && p.password === password);
-        } else if (role === 'doctor') {
-            user = data.doctors.find(d => d.username.toLowerCase() === cleanUser && d.password === password);
-        } else if (role === 'admin') {
-            user = data.admins ? data.admins.find(a => a.username.toLowerCase() === cleanUser && a.password === password) : null;
-            if (!user && cleanUser === 'admin' && password === 'password') {
-                user = { id: 'admin-1', username: 'admin', name: 'System Admin', role: 'admin' };
-            }
-        }
-
-        if (!user) {
-            this.showToast('Invalid Username or Password for selected role.', 'danger');
-            return false;
-        }
-
-        if (user.status === 'suspended') {
-            this.showToast('Your account has been suspended by Admin.', 'danger');
-            return false;
-        }
-
-        if (user.status === 'pending') {
-            this.showToast('Doctor registration pending Admin approval.', 'warning');
-            return false;
-        }
-
-        this.session = {
-            id: user.id,
-            username: user.username,
-            name: user.name,
-            role: role,
-            hospital: user.hospital || null,
-            phone: user.phone || '0771234567'
-        };
-
-        localStorage.setItem('hela_osu_session', JSON.stringify(this.session));
-        this.showToast(`Welcome back, ${user.name}!`, 'success');
+        const statDocs = document.getElementById('statTotalDoctors');
+        const statApps = document.getElementById('statTotalAppointments');
+        const statPatients = document.getElementById('statTotalPatients');
         
-        setTimeout(() => {
-            if (role === 'admin') window.location.href = 'admin.html';
-            else if (role === 'doctor') window.location.href = 'doctor.html';
-            else window.location.href = 'patient.html';
-        }, 400);
-        return true;
+        if (statDocs && data.doctors) statDocs.textContent = `${data.doctors.length}+`;
+        if (statApps && data.appointments) statApps.textContent = `${data.appointments.length + 120}+`;
+        if (statPatients && data.patients) statPatients.textContent = `${data.patients.length + 450}+`;
     }
 
-    registerPatient(formData) {
-        const data = window.dbStore.get();
-        if (data.patients.some(p => p.username.toLowerCase() === formData.username.toLowerCase())) {
-            this.showToast('Username already taken. Please choose another.', 'warning');
-            return;
-        }
+    openQuickLoginModal(role = 'patient') {
+        const overlay = document.getElementById('globalModalOverlay');
+        const container = document.getElementById('modalContent');
+        if (!overlay || !container) return;
 
-        const newPatient = {
-            id: 'pat-' + Math.floor(1000 + Math.random() * 9000),
-            username: formData.username.trim().toLowerCase(),
-            name: formData.name,
-            email: formData.email || `${formData.username}@helaosu.lk`,
-            password: formData.password,
-            phone: formData.phone,
-            nic: formData.nic,
-            age: parseInt(formData.age) || 28,
-            gender: formData.gender || 'Male',
-            status: 'active',
-            registeredDate: new Date().toISOString().split('T')[0]
-        };
+        container.innerHTML = `
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-right-to-bracket" style="color: var(--primary);"></i> Sign In to Hela Osu Portal</h3>
+                <button class="modal-close-btn" onclick="app.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <div style="width: 56px; height: 56px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border-radius: 16px; margin: 0 auto 0.75rem auto; display: flex; align-items: center; justify-content: center; font-size: 1.6rem;">
+                        ${role === 'admin' ? '⚙️' : role === 'doctor' ? '🩺' : '👤'}
+                    </div>
+                    <h4 style="font-size: 1.2rem; color: var(--dark);">${role === 'admin' ? 'System Admin Portal' : role === 'doctor' ? 'Doctor (Wedamahataya) Login' : 'Patient Account Sign In'}</h4>
+                    <p style="color: #64748b; font-size: 0.85rem; margin-top: 0.25rem;">Channel specialists, manage appointments & medical records</p>
+                </div>
 
-        data.patients.push(newPatient);
-        window.dbStore.save(data);
+                <form onsubmit="event.preventDefault(); const u = document.getElementById('quickUsername').value; const p = document.getElementById('quickPassword').value; app.login(u, p, '${role}');">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Username</label>
+                        <input type="text" id="quickUsername" placeholder="${role === 'admin' ? 'admin' : role === 'doctor' ? 'dr_wickramasinghe' : 'saman'}" required style="width: 100%; padding: 0.7rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                    </div>
 
-        this.showToast('Account created! You can now log in.', 'success');
-        this.setLoginRole('patient');
-        this.switchView('view-login');
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Password</label>
+                        <input type="password" id="quickPassword" value="password" required style="width: 100%; padding: 0.7rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.05rem;">
+                        <i class="fa-solid fa-right-to-bracket"></i> Sign In to Portal
+                    </button>
+                </form>
+
+                <div style="margin-top: 1.5rem; text-align: center; border-top: 1px dashed #cbd5e1; padding-top: 1rem;">
+                    <p style="font-size: 0.85rem; color: #64748b;">
+                        New patient? <a href="login.html" style="color: var(--primary); font-weight: 700;">Register Account Here</a>
+                    </p>
+                </div>
+            </div>
+        `;
+
+        overlay.classList.add('active');
     }
 
-    logout() {
-        this.session = null;
-        localStorage.removeItem('hela_osu_session');
-        window.location.href = 'login.html';
+    closeModal() {
+        const overlay = document.getElementById('globalModalOverlay');
+        if (overlay) overlay.classList.remove('active');
     }
 
     applySessionPermissions() {
@@ -217,24 +135,17 @@ class AppController {
         const currentPage = this.getCurrentPageName();
 
         if (!session) {
-            if (currentPage !== 'login.html' && currentPage !== 'index.html') {
+            this.renderHeaderGuestArea();
+            if (currentPage !== 'index.html' && currentPage !== '' && currentPage !== '/' && currentPage !== 'login.html') {
                 window.location.href = 'login.html';
-                return;
-            }
-            const userHeaderArea = document.getElementById('userHeaderArea');
-            if (userHeaderArea) {
-                userHeaderArea.innerHTML = `
-                    <button class="btn btn-outline btn-sm" onclick="app.switchView('view-login')">Login</button>
-                    <button class="btn btn-primary btn-sm" onclick="app.switchView('view-register')">Register</button>
-                `;
             }
             return;
         }
 
         const role = session.role;
 
-        // Redirect if on wrong page for active session role
-        if (currentPage === 'login.html' || currentPage === 'index.html') {
+        // Redirect if on login.html while already authenticated
+        if (currentPage === 'login.html') {
             if (role === 'admin') window.location.href = 'admin.html';
             else if (role === 'doctor') window.location.href = 'doctor.html';
             else window.location.href = 'patient.html';
@@ -256,10 +167,16 @@ class AppController {
 
         const userHeaderArea = document.getElementById('userHeaderArea');
         if (userHeaderArea) {
+            const portalUrl = role === 'admin' ? 'admin.html' : role === 'doctor' ? 'doctor.html' : 'patient.html';
+            const portalLabel = role === 'admin' ? 'Admin Panel' : role === 'doctor' ? 'Doctor Portal' : 'My Bookings';
+
             userHeaderArea.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <a href="${portalUrl}" class="btn btn-sm btn-primary" style="font-size: 0.85rem;">
+                        <i class="fa-solid fa-gauge"></i> ${portalLabel}
+                    </a>
                     <span class="role-badge role-${role}">
-                        <i class="fa-solid fa-user"></i> ${session.name} (${role.toUpperCase()})
+                        <i class="fa-solid fa-user"></i> ${session.name}
                     </span>
                     <button class="btn btn-outline btn-sm" onclick="app.logout()">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout
@@ -269,7 +186,10 @@ class AppController {
         }
 
         // Render portal views
-        if (role === 'admin') {
+        if (currentPage === 'index.html' || currentPage === '' || currentPage === '/') {
+            this.renderDoctorsGrid();
+            this.renderDashboardStats();
+        } else if (role === 'admin') {
             if (window.adminController) window.adminController.renderAdminDashboard();
         } else if (role === 'doctor') {
             this.renderDoctorPortal();
@@ -280,21 +200,60 @@ class AppController {
         }
     }
 
-    switchView(viewId) {
-        const navLinks = document.querySelectorAll('.nav-link');
-        if (viewId === 'view-login' || viewId === 'view-register' || !this.session) {
-            navLinks.forEach(l => l.style.display = 'none');
+    setLoginRole(role) {
+        this.currentLoginRole = role;
+        const roleInput = document.getElementById('loginRoleInput');
+        const titleText = document.getElementById('loginTitleText');
+        const iconContainer = document.getElementById('loginRoleIcon');
+        const usernameInput = document.getElementById('loginUsername');
+
+        if (roleInput) roleInput.value = role;
+
+        if (role === 'doctor') {
+            if (titleText) titleText.textContent = 'Wedamahataya Doctor Login';
+            if (iconContainer) iconContainer.innerHTML = '🩺';
+            if (usernameInput) usernameInput.placeholder = 'Enter doctor username (e.g. dr_wickramasinghe)';
+        } else if (role === 'admin') {
+            if (titleText) titleText.textContent = 'Admin Control Login';
+            if (iconContainer) iconContainer.innerHTML = '⚙️';
+            if (usernameInput) usernameInput.placeholder = 'Enter admin username (e.g. admin)';
+        } else {
+            if (titleText) titleText.textContent = 'Patient Login';
+            if (iconContainer) iconContainer.innerHTML = '👤';
+            if (usernameInput) usernameInput.placeholder = 'Enter username (e.g. saman_k)';
         }
 
+        const roleSwitchButtons = document.getElementById('loginRoleSwitchButtons');
+        if (roleSwitchButtons) {
+            const btns = roleSwitchButtons.querySelectorAll('button');
+            btns.forEach(btn => {
+                const text = btn.textContent.toLowerCase();
+                if ((role === 'doctor' && text.includes('doctor')) ||
+                    (role === 'admin' && text.includes('admin')) ||
+                    (role === 'patient' && text.includes('patient'))) {
+                    btn.style.background = '#2D8181';
+                    btn.style.color = '#ffffff';
+                } else {
+                    btn.style.background = 'transparent';
+                    btn.style.color = '#2D8181';
+                }
+            });
+        }
+    }
+
+    canAccessView(viewId) {
+        if (!viewId || viewId === 'view-login' || viewId === 'view-register' || viewId === 'view-home') return true;
+        if (!this.session) return false;
+        const role = this.session.role;
+        if (viewId === 'view-admin-dashboard' && role !== 'admin') return false;
+        if (viewId === 'view-doctor-queue' && role !== 'doctor') return false;
+        return true;
+    }
+
+    switchView(viewId) {
         if (!this.canAccessView(viewId)) {
             this.showToast('Access denied! Please log in with valid credentials.', 'danger');
-            if (this.session) {
-                if (this.session.role === 'admin') viewId = 'view-admin-dashboard';
-                else if (this.session.role === 'doctor') viewId = 'view-doctor-queue';
-                else viewId = 'view-home';
-            } else {
-                viewId = 'view-login';
-            }
+            return;
         }
 
         document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active-view'));
@@ -303,6 +262,7 @@ class AppController {
         const target = document.getElementById(viewId);
         if (target) {
             target.classList.add('active-view');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         const activeLink = document.querySelector(`.nav-link[data-view="${viewId}"]`);
@@ -310,29 +270,46 @@ class AppController {
             activeLink.classList.add('active');
         }
 
-        // Trigger dynamic tab contents when switched
         if (viewId.startsWith('view-admin')) {
-            window.adminController.renderAdminDashboard();
+            if (window.adminController) window.adminController.renderAdminDashboard();
         } else if (viewId.startsWith('view-doctor')) {
             this.renderDoctorPortal();
         }
     }
 
-    canAccessView(viewId) {
-        if (viewId === 'view-login' || viewId === 'view-register') return true;
-        if (!this.session) return false;
+    performLocalLogin(username, password) {
+        const data = window.dbStore.get();
+        let role = this.currentLoginRole || 'patient';
+        let userObj = null;
 
-        const role = this.session.role;
-        if (role === 'patient') {
-            return (viewId === 'view-home' || viewId === 'view-bookings' || viewId === 'view-consultation');
+        if (username === 'admin' || role === 'admin') {
+            role = 'admin';
+            userObj = { id: 'admin-1', username: username || 'admin', name: 'System Administrator', role: 'admin' };
+        } else {
+            const doc = data.doctors ? data.doctors.find(d => d.username === username || d.email === username) : null;
+            if (doc) {
+                role = 'doctor';
+                userObj = { id: doc.id, username: doc.username, name: doc.name, role: 'doctor' };
+            } else {
+                const pat = (data.patients || []).find(p => p.username === username || p.email === username);
+                if (pat) {
+                    role = 'patient';
+                    userObj = { id: pat.id, username: pat.username, name: pat.name, role: 'patient' };
+                } else {
+                    userObj = { id: 'user-' + Date.now(), username: username, name: username, role: role };
+                }
+            }
         }
-        if (role === 'doctor') {
-            return (viewId === 'view-doctor-queue' || viewId === 'view-doctor-reports' || viewId === 'view-doctor-history');
-        }
-        if (role === 'admin') {
-            return (viewId === 'view-admin-dashboard' || viewId === 'view-admin-doctors' || viewId === 'view-admin-patients' || viewId === 'view-admin-appointments');
-        }
-        return false;
+
+        this.session = userObj;
+        localStorage.setItem('hela_osu_session', JSON.stringify(userObj));
+        this.showToast(`Welcome back, ${userObj.name}!`, 'success');
+
+        setTimeout(() => {
+            if (role === 'admin') window.location.href = 'admin.html';
+            else if (role === 'doctor') window.location.href = 'doctor.html';
+            else window.location.href = 'patient.html';
+        }, 400);
     }
 
     // -------------------------------------------------------------------------
@@ -360,11 +337,10 @@ class AppController {
         grid.innerHTML = docs.map(doc => `
             <div class="doctor-card">
                 <div class="doctor-card-header">
-                    <img src="${doc.image}" class="doctor-img" alt="${doc.name}" />
                     <div class="doctor-info">
                         <h3 class="doctor-name">${doc.name}</h3>
                         <p class="doctor-spec">${doc.specialization}</p>
-                        <p class="doctor-hospital"><i class="fa-solid fa-clinic-medical" style="color: #0d7a5f;"></i> ${doc.hospital}</p>
+                        <p class="doctor-hospital"><i class="fa-solid fa-clinic-medical" style="color: #2D8181;"></i> ${doc.hospital}</p>
                     </div>
                 </div>
                 <div class="doctor-card-body">
@@ -372,7 +348,6 @@ class AppController {
                     <div class="doctor-stats">
                         <span class="rating-badge"><i class="fa-solid fa-star"></i> ${doc.rating} (${doc.reviewsCount})</span>
                         <span><i class="fa-solid fa-briefcase"></i> ${doc.experience}</span>
-                        <span class="fee-tag">Rs. ${doc.fee.toLocaleString()}</span>
                     </div>
                 </div>
                 <div class="doctor-card-footer">
@@ -412,11 +387,110 @@ class AppController {
         this.renderDoctorsGrid(filtered);
     }
 
+    initGalleMap() {
+        const mapContainer = document.getElementById('galleBranchMap');
+        if (!mapContainer) return;
+
+        const galleLat = 6.0535;
+        const galleLng = 80.2210;
+        let loadedLeaflet = false;
+
+        if (typeof L !== 'undefined') {
+            try {
+                const map = L.map('galleBranchMap', {
+                    scrollWheelZoom: false,
+                    zoomControl: true
+                }).setView([galleLat, galleLng], 15);
+
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                const customIcon = L.divIcon({
+                    className: 'custom-galle-pin',
+                    html: `<div style="background: #2D8181; color: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(45, 129, 129, 0.4); border: 3px solid white; font-size: 1.25rem;">🌿</div>`,
+                    iconSize: [44, 44],
+                    iconAnchor: [22, 44],
+                    popupAnchor: [0, -42]
+                });
+
+                const marker = L.marker([galleLat, galleLng], { icon: customIcon }).addTo(map);
+                marker.bindPopup(`
+                    <div style="font-family: 'Plus Jakarta Sans', sans-serif; text-align: center; padding: 6px; min-width: 180px;">
+                        <strong style="color: #2D8181; font-size: 1.05rem;">🌿 Hela Osu Weda Gedara</strong><br/>
+                        <span style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">Galle Medical Center</span><br/>
+                        <small style="color: #64748b;">No. 88, Main Street, Galle</small><br/>
+                        <span style="display: inline-block; margin-top: 6px; background: #ecfdf5; color: #047857; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">Open 24/7 OPD</span>
+                    </div>
+                `).openPopup();
+
+                setTimeout(() => { map.invalidateSize(); }, 100);
+                setTimeout(() => { map.invalidateSize(); }, 500);
+                setTimeout(() => { map.invalidateSize(); }, 1200);
+                loadedLeaflet = true;
+            } catch (e) {
+                console.error('Error initializing Leaflet map:', e);
+            }
+        }
+    }
+
+    openDoctorDetailsModal(docId) {
+        const data = window.dbStore.get();
+        const doc = data.doctors.find(d => d.id === docId);
+        if (!doc) return;
+
+        const container = document.getElementById('modalContent');
+        const overlay = document.getElementById('globalModalOverlay');
+
+        container.innerHTML = `
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-doctor" style="color: var(--primary);"></i> Wedamahataya Specialist Profile</h3>
+                <button class="modal-close-btn" onclick="app.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; gap: 1.25rem; align-items: flex-start; margin-bottom: 1.5rem; background: #f8fafc; padding: 1.25rem; border-radius: 16px;">
+                    <div>
+                        <h3 style="margin-bottom: 0.25rem;">${doc.name}</h3>
+                        <p style="color: var(--primary); font-weight: 700; font-size: 0.95rem;">${doc.title || doc.specialization}</p>
+                        <p style="color: #64748b; font-size: 0.85rem; margin-top: 0.2rem;"><i class="fa-solid fa-clinic-medical"></i> ${doc.hospital} • Reg: ${doc.regNo || 'SLMC-7890'}</p>
+                        <span class="rating-badge" style="margin-top: 0.4rem; display: inline-flex;"><i class="fa-solid fa-star"></i> ${doc.rating} (${doc.reviewsCount} reviews)</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.25rem;">
+                    <h5 style="font-weight: 700; margin-bottom: 0.4rem; color: #334155;">About Wedamahataya</h5>
+                    <p style="color: #475569; font-size: 0.9rem; line-height: 1.5;">${doc.bio}</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: #ecfdf5; padding: 1rem; border-radius: 12px; border: 1px solid #a7f3d0;">
+                    <div>
+                        <span style="font-size: 0.8rem; color: #047857; font-weight: 600;">Experience</span>
+                        <p style="font-size: 1.1rem; font-weight: 800; color: #065f46;">${doc.experience}</p>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.8rem; color: #047857; font-weight: 600;">Consultation Fee</span>
+                        <p style="font-size: 1.1rem; font-weight: 800; color: #065f46;">Rs. ${doc.fee.toLocaleString()}</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="btn btn-primary" style="flex: 1;" onclick="app.closeModal(); app.openBookingModal('${doc.id}')">
+                        <i class="fa-solid fa-calendar-check"></i> Book Session Now
+                    </button>
+                    <button class="btn btn-outline" style="flex: 1;" onclick="app.closeModal()">
+                        Close Profile
+                    </button>
+                </div>
+            </div>
+        `;
+        overlay.classList.add('active');
+    }
+
     openBookingModal(docId) {
         if (!this.session || this.session.role !== 'patient') {
-            this.showToast('Please log in as a Patient to book appointments.', 'warning');
-            this.setLoginRole('patient');
-            this.switchView('view-login');
+            this.showToast('Please sign in as a Patient to book channeling appointments.', 'warning');
+            this.openQuickLoginModal('patient');
             return;
         }
 
@@ -443,10 +517,9 @@ class AppController {
             </div>
             <div class="modal-body">
                 <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; background: #f8fafc; padding: 1rem; border-radius: 12px;">
-                    <img src="${doc.image}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" />
                     <div>
                         <h4 style="margin-bottom: 0.2rem;">${doc.name}</h4>
-                        <p style="color: #0d7a5f; font-weight: 600; font-size: 0.85rem;">${doc.specialization}</p>
+                        <p style="color: #2D8181; font-weight: 600; font-size: 0.85rem;">${doc.specialization}</p>
                         <p style="color: #64748b; font-size: 0.8rem;">🏢 ${doc.hospital}</p>
                     </div>
                 </div>
@@ -1080,10 +1153,9 @@ class AppController {
             </div>
             <div class="modal-body">
                 <div style="display: flex; gap: 1.25rem; align-items: center; margin-bottom: 1.5rem; background: #f8fafc; padding: 1.25rem; border-radius: 12px;">
-                    <img src="${doc.image}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #0d7a5f;" />
                     <div>
                         <h3 style="margin-bottom: 0.2rem;">${doc.name}</h3>
-                        <p style="color: #0d7a5f; font-weight: 600;">${doc.specialization}</p>
+                        <p style="color: #2D8181; font-weight: 600;">${doc.specialization}</p>
                         <p style="color: #64748b; font-size: 0.85rem;"><i class="fa-solid fa-clinic-medical"></i> ${doc.hospital} • Reg: ${doc.regNo}</p>
                         <span style="color: #d97706; font-weight: bold; font-size: 0.9rem;"><i class="fa-solid fa-star"></i> ${doc.rating} (${doc.reviewsCount} reviews)</span>
                     </div>
@@ -1148,8 +1220,16 @@ class AppController {
 
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
+        const iconClass = type === 'success' 
+            ? 'fa-circle-check' 
+            : (type === 'danger' || type === 'error') 
+                ? 'fa-circle-xmark' 
+                : 'fa-circle-info';
+
+        const iconColor = type === 'success' ? '#0d7a5f' : '#ef4444';
+
         toast.innerHTML = `
-            <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'danger' ? 'fa-circle-xmark' : 'fa-circle-info'}"></i>
+            <i class="fa-solid ${iconClass}" style="color: ${iconColor};"></i>
             <div>
                 <strong>System Notice</strong><br>
                 <span style="font-size: 0.85rem;">${message}</span>

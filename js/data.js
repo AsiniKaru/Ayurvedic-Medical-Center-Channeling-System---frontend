@@ -14,15 +14,15 @@ const DEFAULT_DATA = {
             title: 'Wedamahataya (Senior Ayurvedic Specialist)',
             specialization: 'Ayurveda & Traditional Healing',
             regNo: 'SL-AYU-4029',
-            hospital: 'Hela Osu Weda Gedara - Colombo 07',
+            hospital: 'Hela Osu Weda Gedara - Galle Branch',
             fee: 2500,
             hospitalFee: 500,
             experience: '18 Years',
             rating: 4.9,
             reviewsCount: 48,
-            image: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=400',
+            image: '',
             status: 'approved',
-            bio: 'Senior practitioner in traditional Sri Lankan Weda Kam & Panchakarma therapy with over 18 years of holistic healing experience at Hela Osu Weda Gedara.',
+            bio: 'Senior practitioner in traditional Sri Lankan Weda Kam & Panchakarma therapy with over 18 years of holistic healing experience at Hela Osu Weda Gedara Galle.',
             availability: {
                 workingDays: ['Monday', 'Wednesday', 'Friday', 'Saturday'],
                 timeSlots: ['09:00 AM - 12:00 PM', '03:00 PM - 06:00 PM'],
@@ -33,20 +33,20 @@ const DEFAULT_DATA = {
             id: 'doc-102',
             username: 'dr_jayawardena',
             password: 'password',
-            email: 'kandy.doc@helaosu.lk',
+            email: 'galle.doc2@helaosu.lk',
             name: 'Dr. Anura Jayawardena',
             title: 'Consultant Ayurvedic Physician',
             specialization: 'Ayurvedic Wellness & Vitality',
             regNo: 'SL-AYU-1849',
-            hospital: 'Hela Osu Weda Gedara - Kandy',
+            hospital: 'Hela Osu Weda Gedara - Galle Branch',
             fee: 3000,
             hospitalFee: 500,
             experience: '15 Years',
             rating: 4.8,
             reviewsCount: 36,
-            image: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=400',
+            image: '',
             status: 'approved',
-            bio: 'Specialist in herbal cardiac care, hypertension management, and preventive Ayurvedic living at Hela Osu Kandy branch.',
+            bio: 'Specialist in herbal cardiac care, hypertension management, and preventive Ayurvedic living at Hela Osu Galle center.',
             availability: {
                 workingDays: ['Tuesday', 'Thursday', 'Saturday'],
                 timeSlots: ['04:00 PM - 08:00 PM'],
@@ -62,13 +62,13 @@ const DEFAULT_DATA = {
             title: 'Ayurvedic Pediatrician (Bala Roga Weda)',
             specialization: 'Pediatrics & Child Health',
             regNo: 'SL-AYU-2291',
-            hospital: 'Hela Osu Weda Gedara - Galle',
+            hospital: 'Hela Osu Weda Gedara - Galle Branch',
             fee: 2600,
             hospitalFee: 500,
             experience: '12 Years',
             rating: 4.95,
             reviewsCount: 64,
-            image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=400',
+            image: '',
             status: 'approved',
             bio: 'Compassionate traditional specialist in child herbal immunizations, digestive wellness, and pediatric care at Hela Osu Galle.',
             availability: {
@@ -81,20 +81,20 @@ const DEFAULT_DATA = {
             id: 'doc-104',
             username: 'dr_bandara',
             password: 'password',
-            email: 'kurunegala.doc@helaosu.lk',
+            email: 'galle.doc3@helaosu.lk',
             name: 'Dr. Chaminda Bandara',
             title: 'Spine & Joint Specialist (Kadu Wedamahataya)',
             specialization: 'Spine & Joint Rehabilitation',
             regNo: 'SL-AYU-1502',
-            hospital: 'Hela Osu Weda Gedara - Kurunegala',
+            hospital: 'Hela Osu Weda Gedara - Galle Branch',
             fee: 3200,
             hospitalFee: 500,
             experience: '20 Years',
             rating: 4.75,
             reviewsCount: 29,
-            image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=400',
+            image: '',
             status: 'approved',
-            bio: 'Expert in traditional joint adjustments, vertebral realignment, and chronic arthritis herbal oil therapies.',
+            bio: 'Expert in traditional joint adjustments, vertebral realignment, and chronic arthritis herbal oil therapies at Hela Osu Galle.',
             availability: {
                 workingDays: ['Wednesday', 'Saturday', 'Sunday'],
                 timeSlots: ['02:00 PM - 05:00 PM'],
@@ -105,18 +105,18 @@ const DEFAULT_DATA = {
             id: 'doc-105',
             username: 'dr_samarasinghe',
             password: 'password',
-            email: 'gampaha.doc@helaosu.lk',
+            email: 'galle.doc4@helaosu.lk',
             name: 'Dr. Sanduni Samarasinghe',
             title: 'Ayurvedic Skin & Cosmetic Specialist',
             specialization: 'Dermatology & Skin Care',
             regNo: 'SL-AYU-3104',
-            hospital: 'Hela Osu Weda Gedara - Gampaha',
+            hospital: 'Hela Osu Weda Gedara - Galle Branch',
             fee: 2800,
             hospitalFee: 500,
             experience: '9 Years',
             rating: 4.85,
             reviewsCount: 42,
-            image: 'https://images.unsplash.com/photo-1594824813566-78853677966b?auto=format&fit=crop&q=80&w=400',
+            image: '',
             status: 'approved',
             bio: 'Expert in clinical Ayurvedic dermatology, acne treatments, herbal skin restoration, and complexion wellness.',
             availability: {
@@ -175,7 +175,7 @@ const DEFAULT_DATA = {
             doctorId: 'doc-101',
             doctorName: 'Dr. Deshabandu Wickramasinghe',
             specialization: 'Ayurveda & Traditional Healing',
-            hospital: 'Hela Osu Weda Gedara - Colombo 07',
+            hospital: 'Hela Osu Weda Gedara - Galle Branch',
             date: '2026-08-15',
             timeSlot: '09:00 AM - 12:00 PM',
             tokenNo: 4,
@@ -197,26 +197,28 @@ const DEFAULT_DATA = {
             doctorId: 'doc-103',
             doctorName: 'Dr. Nilmini Fernando',
             specialization: 'Pediatrics & Child Health',
-            hospital: 'Hela Osu Weda Gedara - Galle',
-            date: '2026-08-05',
+            hospital: 'Hela Osu Weda Gedara - Galle Branch',
+            date: '2026-07-20',
             timeSlot: '08:30 AM - 11:30 AM',
             tokenNo: 2,
             doctorFee: 2600,
             hospitalFee: 500,
             totalFee: 3100,
             paymentStatus: 'Paid',
-            paymentMethod: 'Credit Card',
+            paymentMethod: 'Cash',
             status: 'Completed',
-            notes: 'Child herbal booster consultation.',
+            notes: 'Child digestive wellness consultation.',
             prescription: {
-                diagnosis: 'Routine Pediatric Herbal Check & Normal Growth Status',
+                id: 'RX-9081',
+                diagnosis: 'Mild Ajeerna (Indigestion) & Digestive Heat',
                 medicines: [
-                    { name: 'Suwadharani Herbal Syrup', dosage: '5ml once daily after breakfast', duration: '14 Days' }
+                    { name: 'Siddharthaka Thailaya', dosage: '5ml daily before meals', duration: '14 Days' },
+                    { name: 'Asokarishtaya', dosage: '10ml after meals', duration: '14 Days' }
                 ],
-                doctorNotes: 'Child is healthy. Follow up in 3 months.',
-                issuedDate: '2026-08-05'
+                dietaryAdvice: 'Avoid cold beverages and fried food. Drink warm coriander water.',
+                issuedDate: '2026-07-20'
             },
-            createdAt: '2026-08-01'
+            createdAt: '2026-07-15'
         }
     ],
 
@@ -273,8 +275,9 @@ class DataStore {
     }
 
     init() {
-        if (!localStorage.getItem('hela_osu_db')) {
+        if (!localStorage.getItem('hela_osu_db_galle_v5')) {
             localStorage.setItem('hela_osu_db', JSON.stringify(DEFAULT_DATA));
+            localStorage.setItem('hela_osu_db_galle_v5', 'true');
         }
     }
 

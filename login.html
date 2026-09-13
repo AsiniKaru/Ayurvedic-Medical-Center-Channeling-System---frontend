@@ -24,7 +24,7 @@
     <!-- Sticky Navigation Bar -->
     <nav class="navbar">
         <div class="container navbar-container">
-            <a href="login.html" class="brand-logo">
+            <a href="index.html" class="brand-logo">
                 <div class="brand-logo-icon">🌿</div>
                 <div>
                     <span data-i18n="brandName">Hela Osu Weda Gedara</span>
@@ -33,6 +33,9 @@
             </a>
 
             <div class="nav-controls">
+                <a href="index.html" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-house"></i> Home Dashboard
+                </a>
                 <!-- Multi-Language Switcher -->
                 <select id="langSelect" style="padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; outline: none;" onchange="window.i18n.setLanguage(this.value)">
                     <option value="en">🌐 English</option>
@@ -40,10 +43,7 @@
                     <option value="ta">🇱🇰 தமிழ்</option>
                 </select>
 
-                <!-- Dynamic Auth Header Area -->
-                <div id="userHeaderArea">
-                    <!-- Rendered via JS -->
-                </div>
+                <div id="userHeaderArea"></div>
             </div>
         </div>
     </nav>
@@ -53,56 +53,98 @@
 
         <!-- 0. LOGIN PAGE VIEW -->
         <section id="view-login" class="page-view active-view">
-            <div class="container" style="max-width: 480px; margin-top: 2.5rem;">
-                <div class="glass-card" style="box-shadow: var(--shadow-lg); padding: 2.25rem;">
-                    <div style="text-align: center; margin-bottom: 1.75rem;">
-                        <div id="loginRoleIcon" style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border-radius: 16px; margin: 0 auto 0.75rem auto; display: flex; align-items: center; justify-content: center; font-size: 1.75rem;">👤</div>
-                        <h2 id="loginTitleText">Patient Login</h2>
-                        <p style="color: #64748b; font-size: 0.85rem; margin-top: 0.25rem;">Hela Osu Weda Gedara Portal</p>
-                    </div>
+            <div class="container" style="max-width: 1160px; margin-top: 2rem; margin-bottom: 2rem;">
+                
+                <div style="background: white; border-radius: 28px; overflow: hidden; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12); border: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 1.05fr; align-items: stretch; min-height: 620px;">
+                    
+                    <!-- LEFT COLUMN: MEDICAL TEAM PHOTO WITH CLEAN OVERLAY -->
+                    <div style="position: relative; background: url('images/medical-team.png') center center / cover no-repeat; min-height: 520px; display: flex; flex-direction: column; justify-content: flex-end; padding: 1.5rem; overflow: hidden;">
+                        
+                        <!-- Light gradient overlay for soft readability -->
+                        <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,0.1) 0%, rgba(15,23,42,0.05) 50%, rgba(15,23,42,0.45) 100%); pointer-events: none;"></div>
 
-                    <form onsubmit="event.preventDefault(); app.login(
-                        document.getElementById('loginUsername').value,
-                        document.getElementById('loginPassword').value,
-                        document.getElementById('loginRoleInput').value
-                    );">
-                        <input type="hidden" id="loginRoleInput" value="patient" />
-
-                        <div style="margin-bottom: 1rem;">
-                            <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Username</label>
-                            <input type="text" id="loginUsername" placeholder="e.g. saman" required style="width: 100%; padding: 0.7rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
-                        </div>
-
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Password</label>
-                            <input type="password" id="loginPassword" placeholder="••••••••" required style="width: 100%; padding: 0.7rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.05rem;">
-                            <i class="fa-solid fa-right-to-bracket"></i> Sign In
-                        </button>
-                    </form>
-
-                    <!-- Role Switcher Buttons at Lower Section -->
-                    <div style="margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px dashed #cbd5e1;">
-                        <p style="font-size: 0.8rem; text-align: center; color: #64748b; font-weight: 600; margin-bottom: 0.75rem;">Logging in as a Doctor or Admin?</p>
-                        <div id="loginRoleSwitchButtons" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('doctor')">
-                                🩺 Switch to Doctor Login
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.8rem;" onclick="app.setLoginRole('admin')">
-                                ⚙️ Switch to Admin Login
-                            </button>
+                        <!-- Bottom Card Overlay: SEAMLESS APPOINTMENTS -->
+                        <div style="position: relative; z-index: 2; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); padding: 1.35rem 1.6rem; border-radius: 20px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15); border: 1px solid rgba(255, 255, 255, 0.9);">
+                            <div style="font-size: 0.72rem; font-weight: 800; color: #2D8181; text-transform: uppercase; letter-spacing: 0.85px; margin-bottom: 0.35rem;">
+                                SEAMLESS APPOINTMENTS
+                            </div>
+                            <p style="font-size: 0.85rem; color: #334155; line-height: 1.55; margin: 0; font-weight: 500;">
+                                Our streamlined channeling system ensures fast confirmations and trusted medical consultations without unnecessary delays.
+                            </p>
                         </div>
                     </div>
 
-                    <div style="text-align: center; margin-top: 1.25rem;">
-                        <p style="font-size: 0.85rem; color: #64748b;">Don't have a patient account? <a href="#" onclick="app.switchView('view-register')">Register here</a></p>
+                    <!-- RIGHT COLUMN: PROPER CLEAN LOGIN CARD -->
+                    <div style="background: linear-gradient(145deg, #1b5353 0%, #2D8181 100%); color: white; padding: 3rem 2.5rem; display: flex; flex-direction: column; justify-content: center; position: relative; overflow: hidden;">
+                        
+                        <!-- Background Glow Decoration -->
+                        <div style="position: absolute; top: -80px; right: -80px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(94, 234, 212, 0.22) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                        <div style="position: relative; z-index: 2; width: 100%;">
+                            
+                            <!-- Integrated Clean Sign In Card -->
+                            <div style="background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(16px); color: #0f172a; padding: 2.25rem; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
+                                
+                                <div style="text-align: center; margin-bottom: 1.5rem;">
+                                    <div id="loginRoleIcon" style="width: 54px; height: 54px; background: linear-gradient(135deg, #1b5353, #2D8181); color: white; border-radius: 16px; margin: 0 auto 0.75rem auto; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 6px 16px rgba(45, 129, 129, 0.3);">👤</div>
+                                    <h2 id="loginTitleText" style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 0 0 0.25rem 0;">Patient Login</h2>
+                                    <p style="font-size: 0.85rem; color: #64748b; margin: 0;">Sign in to access your Hela Osu Weda Gedara portal</p>
+                                </div>
+
+                                <form id="mainLoginForm">
+                                    <input type="hidden" id="loginRoleInput" value="patient" />
+
+                                    <div style="margin-bottom: 1rem;">
+                                        <label style="font-weight: 600; font-size: 0.82rem; color: #475569; display: block; margin-bottom: 0.35rem;">Username</label>
+                                        <div style="position: relative;">
+                                            <i class="fa-solid fa-user" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
+                                            <input type="text" id="loginUsername" placeholder="Enter username (e.g. admin)" required style="width: 100%; padding: 0.7rem 0.85rem 0.7rem 2.5rem; border: 1.5px solid #cbd5e1; border-radius: 12px; font-size: 0.9rem; outline: none; background: white; transition: all 0.2s;" />
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom: 1.25rem;">
+                                        <label style="font-weight: 600; font-size: 0.82rem; color: #475569; display: block; margin-bottom: 0.35rem;">Password</label>
+                                        <div style="position: relative;">
+                                            <i class="fa-solid fa-lock" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
+                                            <input type="password" id="loginPassword" placeholder="••••••••" required style="width: 100%; padding: 0.7rem 0.85rem 0.7rem 2.5rem; border: 1.5px solid #cbd5e1; border-radius: 12px; font-size: 0.9rem; outline: none; background: white; transition: all 0.2s;" />
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 30px; padding: 0.75rem 1.25rem; font-weight: 700; font-size: 0.98rem; background: linear-gradient(135deg, #1b5353, #2D8181); border: none; color: white; box-shadow: 0 6px 18px rgba(45, 129, 129, 0.35); cursor: pointer;">
+                                        <i class="fa-solid fa-right-to-bracket"></i> Sign In to Portal
+                                    </button>
+                                </form>
+
+                                <!-- Register Link -->
+                                <div style="text-align: center; margin-top: 1.25rem;">
+                                    <p style="font-size: 0.85rem; color: #64748b; margin: 0;">Don't have a patient account? <a href="#" onclick="app.switchView('view-register')" style="color: #2D8181; font-weight: 700; text-decoration: none;">Register here</a></p>
+                                </div>
+
+                                <!-- Role Switcher Buttons -->
+                                <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px dashed #cbd5e1; text-align: center;">
+                                    <p style="font-size: 0.78rem; color: #64748b; font-weight: 600; margin-bottom: 0.6rem;">Logging in as a Doctor or Admin?</p>
+                                    <div id="loginRoleSwitchButtons" style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                                        <button type="button" class="btn btn-sm btn-outline" style="font-size: 0.78rem; padding: 0.35rem 0.75rem; border-radius: 20px; border-color: #2D8181; color: #2D8181; font-weight: 600;" onclick="app.setLoginRole('patient')">
+                                            👤 Patient Login
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline" style="font-size: 0.78rem; padding: 0.35rem 0.75rem; border-radius: 20px; border-color: #2D8181; color: #2D8181; font-weight: 600;" onclick="app.setLoginRole('doctor')">
+                                            🩺 Doctor Login
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline" style="font-size: 0.78rem; padding: 0.35rem 0.75rem; border-radius: 20px; border-color: #2D8181; color: #2D8181; font-weight: 600;" onclick="app.setLoginRole('admin')">
+                                            ⚙️ Admin Login
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
                     </div>
+
                 </div>
+
             </div>
         </section>
-
 
         <!-- 0.1 REGISTER PAGE VIEW -->
         <section id="view-register" class="page-view">
@@ -113,16 +155,7 @@
                         <p style="color: #64748b; font-size: 0.9rem;">Join Hela Osu Weda Gedara Channeling Network</p>
                     </div>
 
-                    <form onsubmit="event.preventDefault(); app.registerPatient({
-                        username: document.getElementById('regUsername').value,
-                        name: document.getElementById('regName').value,
-                        email: document.getElementById('regEmail').value,
-                        password: document.getElementById('regPassword').value,
-                        phone: document.getElementById('regPhone').value,
-                        nic: document.getElementById('regNic').value,
-                        age: document.getElementById('regAge').value,
-                        gender: document.getElementById('regGender').value
-                    });">
+                    <form id="mainRegisterForm">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
                             <div>
                                 <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Username</label>
@@ -198,49 +231,102 @@
         </div>
     </footer>
 
-    <!-- GLOBAL MODAL OVERLAY CONTAINER -->
-    <div id="globalModalOverlay" class="modal-overlay">
-        <div id="modalContent" class="modal-container">
-            <!-- Dynamic Modal Content rendered via JS -->
-        </div>
-    </div>
-
-    <!-- FLOATING AI ASSISTANT CHATBOT -->
-    <div class="chatbot-widget">
-        <div id="chatbotBox" class="chatbot-box">
-            <div class="chatbot-header">
-                <div style="display: flex; align-items: center; gap: 0.6rem;">
-                    <i class="fa-solid fa-robot"></i>
-                    <strong>Hela Osu AI Health Assistant</strong>
-                </div>
-                <button style="background: transparent; border: none; color: white; font-size: 1.25rem; cursor: pointer;" onclick="window.chatbot.toggle()">&times;</button>
-            </div>
-            <div id="chatMessagesContainer" class="chatbot-messages">
-                <!-- Messages rendered via JS -->
-            </div>
-            <div class="chatbot-input-area">
-                <input type="text" id="chatInput" placeholder="Ask about Hela doctors or booking..." onkeypress="if(event.key === 'Enter') { window.chatbot.sendMessage(this.value); this.value = ''; }" />
-                <button class="btn btn-primary btn-sm" onclick="const inp = document.getElementById('chatInput'); window.chatbot.sendMessage(inp.value); inp.value = '';">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </button>
-            </div>
-        </div>
-        <button class="chatbot-btn" onclick="window.chatbot.toggle()">
-            <i class="fa-solid fa-comment-medical"></i>
-        </button>
-    </div>
-
     <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- JS MODULE LOADERS -->
-    <script src="js/data.js"></script>
-    <script src="js/i18n.js"></script>
-    <script src="js/pdf-generator.js"></script>
-    <script src="js/charts.js"></script>
-    <script src="js/chatbot.js"></script>
-    <script src="js/admin.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/data.js?v=2"></script>
+    <script src="js/i18n.js?v=2"></script>
+    <script src="js/pdf-generator.js?v=2"></script>
+    <script src="js/charts.js?v=2"></script>
+    <script src="js/chatbot.js?v=2"></script>
+    <script src="js/admin.js?v=2"></script>
+    <script src="js/app.js?v=4"></script>
 
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const loginForm = document.getElementById("mainLoginForm");
+        if (loginForm) {
+            loginForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                const username = document.getElementById("loginUsername").value.trim();
+                const password = document.getElementById("loginPassword").value.trim();
+
+                try {
+                    const response = await fetch("http://localhost:8080/api/v1/users/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const res = await response.json();
+                    console.log("LOGIN RESPONSE:", res);
+
+                    if (response.ok && res.data && res.data.token) {
+                        const role = (res.data.role || "ADMIN").toLowerCase();
+
+                        const sessionObj = {
+                            id: res.data.userId || 1,
+                            username: res.data.username,
+                            name: res.data.username.toUpperCase(),
+                            role: role,
+                            token: res.data.token
+                        };
+
+                        localStorage.setItem("hela_osu_session", JSON.stringify(sessionObj));
+                        localStorage.setItem("jwt_token", res.data.token);
+                        localStorage.setItem("user_role", res.data.role);
+
+                        if (role === "admin") {
+                            window.location.replace("admin.html");
+                        } else if (role === "doctor") {
+                            window.location.replace("doctor.html");
+                        } else {
+                            window.location.replace("patient.html");
+                        }
+                    } else {
+                        if (window.app) window.app.performLocalLogin(username, password);
+                        else alert(res.message || "Invalid Credentials");
+                    }
+                } catch (err) {
+                    console.warn("Backend error, trying local authentication:", err);
+                    if (window.app) window.app.performLocalLogin(username, password);
+                    else alert("Could not reach server.");
+                }
+            });
+        }
+
+        const regForm = document.getElementById("mainRegisterForm");
+        if (regForm) {
+            regForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const username = document.getElementById("regUsername").value.trim();
+                const name = document.getElementById("regName").value.trim();
+                const email = document.getElementById("regEmail").value.trim();
+                const phone = document.getElementById("regPhone").value.trim();
+                const nic = document.getElementById("regNic").value.trim();
+                const age = document.getElementById("regAge").value;
+                const gender = document.getElementById("regGender").value;
+                const password = document.getElementById("regPassword").value;
+
+                const data = window.dbStore.get();
+                if (!data.patients) data.patients = [];
+                const newPatient = { id: 'pat-' + Date.now(), username, name, email, phone, nic, age, gender, password };
+                data.patients.push(newPatient);
+                window.dbStore.save(data);
+
+                if (window.app) {
+                    window.app.showToast('Registration successful! Please sign in.', 'success');
+                    window.app.setLoginRole('patient');
+                    window.app.switchView('view-login');
+                } else {
+                    alert('Registration successful! Please sign in.');
+                }
+            });
+        }
+    });
+    </script>
 </body>
 </html>

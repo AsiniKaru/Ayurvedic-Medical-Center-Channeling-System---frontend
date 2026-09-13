@@ -3,11 +3,11 @@
    ========================================================================== */
 
 :root {
-    /* Color Palette - Heritage Ayurvedic Emerald & Modern Slate */
-    --primary: #0d7a5f;
-    --primary-hover: #095945;
-    --primary-light: #e6f4f0;
-    --primary-glow: rgba(13, 122, 95, 0.25);
+    /* Color Palette - Heritage Ayurvedic #2D8181 & Modern Slate */
+    --primary: #2D8181;
+    --primary-hover: #226464;
+    --primary-light: #eaf5f5;
+    --primary-glow: rgba(45, 129, 129, 0.25);
     
     --secondary: #d97706;
     --secondary-hover: #b45309;
