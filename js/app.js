@@ -15,6 +15,10 @@ class AppController {
         this.init();
     }
 
+    bindEvents() {
+        // Event bindings for core controls if needed
+    }
+
     init() {
         window.addEventListener('DOMContentLoaded', () => {
             this.bindEvents();
@@ -146,29 +150,29 @@ class AppController {
 
         // Redirect if on login.html while already authenticated
         if (currentPage === 'login.html') {
-            if (role === 'admin') window.location.href = 'admin.html';
+            if (role === 'admin') window.location.href = 'adminDashboard.html';
             else if (role === 'doctor') window.location.href = 'doctor.html';
             else window.location.href = 'patient.html';
             return;
         }
 
-        if (currentPage === 'admin.html' && role !== 'admin') {
+        if ((currentPage === 'admin.html' || currentPage === 'adminDashboard.html') && role !== 'admin') {
             window.location.href = (role === 'doctor') ? 'doctor.html' : 'patient.html';
             return;
         }
         if (currentPage === 'doctor.html' && role !== 'doctor') {
-            window.location.href = (role === 'admin') ? 'admin.html' : 'patient.html';
+            window.location.href = (role === 'admin') ? 'adminDashboard.html' : 'patient.html';
             return;
         }
         if (currentPage === 'patient.html' && role !== 'patient') {
-            window.location.href = (role === 'admin') ? 'admin.html' : 'doctor.html';
+            window.location.href = (role === 'admin') ? 'adminDashboard.html' : 'doctor.html';
             return;
         }
 
         const userHeaderArea = document.getElementById('userHeaderArea');
         if (userHeaderArea) {
-            const portalUrl = role === 'admin' ? 'admin.html' : role === 'doctor' ? 'doctor.html' : 'patient.html';
-            const portalLabel = role === 'admin' ? 'Admin Panel' : role === 'doctor' ? 'Doctor Portal' : 'My Bookings';
+            const portalUrl = role === 'admin' ? 'adminDashboard.html' : role === 'doctor' ? 'doctor.html' : 'patient.html';
+            const portalLabel = role === 'admin' ? 'Admin Control Center' : role === 'doctor' ? 'Doctor Portal' : 'My Bookings';
 
             userHeaderArea.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 0.65rem;">
@@ -306,10 +310,19 @@ class AppController {
         this.showToast(`Welcome back, ${userObj.name}!`, 'success');
 
         setTimeout(() => {
-            if (role === 'admin') window.location.href = 'admin.html';
+            if (role === 'admin') window.location.href = 'adminDashboard.html';
             else if (role === 'doctor') window.location.href = 'doctor.html';
             else window.location.href = 'patient.html';
         }, 400);
+    }
+
+    logout() {
+        this.session = null;
+        localStorage.removeItem('hela_osu_session');
+        this.showToast('Logged out successfully.', 'info');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 300);
     }
 
     // -------------------------------------------------------------------------
@@ -370,7 +383,7 @@ class AppController {
         const spec = specSelect ? specSelect.value : 'all';
 
         const data = window.dbStore.get();
-        let filtered = data.doctors.filter(d => d.status === 'approved' && d.hospital.includes('Hela Osu Weda Gedara'));
+        let filtered = data.doctors.filter(d => d.status === 'approved');
 
         if (spec !== 'all') {
             filtered = filtered.filter(d => d.specialization.toLowerCase().includes(spec.toLowerCase()));
@@ -380,7 +393,8 @@ class AppController {
             filtered = filtered.filter(d => 
                 d.name.toLowerCase().includes(query) ||
                 d.specialization.toLowerCase().includes(query) ||
-                d.hospital.toLowerCase().includes(query)
+                d.hospital.toLowerCase().includes(query) ||
+                (d.availability && d.availability.workingDays && d.availability.workingDays.some(day => day.toLowerCase().includes(query)))
             );
         }
 
@@ -660,7 +674,7 @@ class AppController {
     processPayment() {
         const btn = document.getElementById('btnPayConfirm');
         if (btn) {
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing Booking...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Authorizing Payment...`;
             btn.disabled = true;
         }
 
@@ -671,7 +685,8 @@ class AppController {
                 id: 'AP-' + Math.floor(1000 + Math.random() * 9000),
                 patientId: this.session.id,
                 patientName: this.session.name,
-                patientPhone: this.session.phone,
+                patientEmail: this.session.email || 'patient@helaosu.lk',
+                patientPhone: this.session.phone || '0771234567',
                 doctorId: doc.id,
                 doctorName: doc.name,
                 specialization: doc.specialization,
@@ -696,7 +711,7 @@ class AppController {
                 id: 'NOTIF-' + Date.now(),
                 userId: this.session.id,
                 title: 'Hela Osu Channeling Confirmed 🎉',
-                message: `Booking #${newAp.id} reserved with ${doc.name} for ${newAp.date} (Token #${newAp.tokenNo}).`,
+                message: `Booking #${newAp.id} reserved with ${doc.name} for ${newAp.date} (Token #${newAp.tokenNo}). E-Voucher sent to email.`,
                 time: 'Just now',
                 unread: true
             });
@@ -704,11 +719,11 @@ class AppController {
             window.dbStore.save(data);
 
             this.closeModal();
-            this.showToast(`Booking Successful! Token #${newAp.tokenNo} reserved.`, 'success');
+            this.showToast(`🎉 Booking Successful! Token #${newAp.tokenNo} reserved. E-Channeling Voucher sent to email!`, 'success');
             this.renderPatientBookings();
             this.updateNotificationBadge();
             this.switchView('view-bookings');
-        }, 1000);
+        }, 800);
     }
 
     renderPatientBookings() {
@@ -720,7 +735,9 @@ class AppController {
 
         if (myAps.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 3rem; background: white; border-radius: 16px;">
+                <div style="text-align: center; padding: 3rem; background: white; border-radius: 16px; border: 1px solid #e2e8f0;">
+                    <i class="fa-solid fa-calendar-xmark" style="font-size: 2.5rem; color: #cbd5e1; margin-bottom: 0.75rem;"></i>
+                    <h3 style="color: #0f172a; margin-bottom: 0.3rem;">No Active Bookings</h3>
                     <p style="color: #64748b;">You have no active or previous channeling appointments at Hela Osu Weda Gedara.</p>
                 </div>
             `;
@@ -731,17 +748,18 @@ class AppController {
             <div class="glass-card" style="margin-bottom: 1.25rem;">
                 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <span style="background: #e0f2fe; color: #0284c7; padding: 0.3rem 0.6rem; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">
+                        <span style="background: #e0f2fe; color: #0284c7; padding: 0.3rem 0.65rem; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">
                             VOUCHER #${ap.id}
                         </span>
-                        <h3 style="margin-top: 0.4rem; font-size: 1.2rem;">${ap.doctorName}</h3>
+                        <h3 style="margin-top: 0.4rem; font-size: 1.2rem; color: #0f172a;">${ap.doctorName}</h3>
                         <p style="color: #0d7a5f; font-size: 0.9rem; font-weight: 600;">🌿 ${ap.specialization} • ${ap.hospital}</p>
                     </div>
                     <div style="text-align: right;">
                         <span style="font-size: 1.5rem; font-weight: 800; color: #0d7a5f;">TOKEN #${ap.tokenNo}</span><br>
-                        <span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; background: ${
+                        <span style="padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; background: ${
                             ap.status === 'Completed' ? '#dcfce7; color: #15803d;' :
-                            ap.status === 'Cancelled' ? '#fee2e2; color: #b91c1c;' : '#fef3c7; color: #b45309;'
+                            ap.status === 'Cancelled' ? '#fee2e2; color: #b91c1c;' :
+                            ap.status === 'Rescheduled' ? '#e0f2fe; color: #0369a1;' : '#fef3c7; color: #b45309;'
                         }">${ap.status}</span>
                     </div>
                 </div>
@@ -749,20 +767,25 @@ class AppController {
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.9rem; margin-bottom: 1.25rem;">
                     <div><strong>Date & Time:</strong><br>${ap.date} (${ap.timeSlot})</div>
                     <div><strong>Total Fee:</strong><br>Rs. ${ap.totalFee.toLocaleString()} (${ap.paymentMethod})</div>
-                    <div><strong>Payment Status:</strong><br>${ap.paymentStatus}</div>
+                    <div><strong>Payment Status:</strong><br><span style="color: ${ap.paymentStatus === 'Paid Online' ? '#15803d' : '#b45309'}; font-weight: 700;">${ap.paymentStatus}</span></div>
                 </div>
 
                 <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
                     <button class="btn btn-sm btn-primary" onclick="app.viewReceipt('${ap.id}')">
-                        <i class="fa-solid fa-receipt"></i> E-Receipt & Voucher
+                        <i class="fa-solid fa-receipt"></i> E-Receipt & Voucher PDF
                     </button>
                     ${ap.prescription ? `
                         <button class="btn btn-sm btn-secondary" onclick="app.viewPrescription('${ap.id}')">
                             <i class="fa-solid fa-file-prescription"></i> Digital Prescription
                         </button>
                     ` : ''}
-                    ${ap.status === 'Upcoming' ? `
-                        <button class="btn btn-sm" style="background: #fee2e2; color: #dc2626;" onclick="app.cancelAppointment('${ap.id}')">Cancel</button>
+                    ${ap.status === 'Upcoming' || ap.status === 'Rescheduled' ? `
+                        <button class="btn btn-sm btn-outline" style="border-color: #2D8181; color: #2D8181; font-weight: 600;" onclick="app.openRescheduleModal('${ap.id}')">
+                            <i class="fa-solid fa-calendar-days"></i> Reschedule
+                        </button>
+                        <button class="btn btn-sm" style="background: #fee2e2; color: #dc2626; border: none; font-weight: 600;" onclick="app.cancelAppointment('${ap.id}')">
+                            <i class="fa-solid fa-xmark"></i> Cancel
+                        </button>
                     ` : ''}
                     ${ap.status === 'Completed' ? `
                         <button class="btn btn-sm btn-outline" onclick="app.openRatingModal('${ap.doctorId}')">
@@ -839,17 +862,85 @@ class AppController {
         }
     }
 
-    rescheduleAppointment(apId) {
-        const newDate = prompt('Enter new requested date (YYYY-MM-DD):', '2026-08-22');
-        if (newDate) {
-            const data = window.dbStore.get();
-            const ap = data.appointments.find(a => a.id === apId);
-            if (ap) {
-                ap.date = newDate;
-                window.dbStore.save(data);
-                this.showToast(`Appointment rescheduled to ${newDate}.`, 'info');
-                this.renderPatientBookings();
-            }
+    openRescheduleModal(apId) {
+        const data = window.dbStore.get();
+        const ap = data.appointments.find(a => a.id === apId);
+        if (!ap) return;
+
+        const doc = data.doctors.find(d => d.id === ap.doctorId) || { availability: { timeSlots: ['09:00 AM - 12:00 PM', '03:00 PM - 06:00 PM'] } };
+
+        const container = document.getElementById('modalContent');
+        const overlay = document.getElementById('globalModalOverlay');
+
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const minDate = tomorrow.toISOString().split('T')[0];
+
+        container.innerHTML = `
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-calendar-days" style="color: #2D8181;"></i> Reschedule Channeling Appointment</h3>
+                <button class="modal-close-btn" onclick="app.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 12px; margin-bottom: 1.25rem; border: 1px solid #e2e8f0;">
+                    <p style="font-weight: 700; color: #0f172a; margin-bottom: 0.2rem;">VOUCHER #${ap.id} • ${ap.doctorName}</p>
+                    <p style="font-size: 0.85rem; color: #64748b; margin: 0;">Current Schedule: ${ap.date} (${ap.timeSlot})</p>
+                </div>
+
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 0.4rem; font-size: 0.9rem;">Select New Date</label>
+                    <input type="date" id="rescheduleDateInput" value="${minDate}" min="${minDate}" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 0.4rem; font-size: 0.9rem;">Select New Time Slot</label>
+                    <select id="rescheduleSlotSelect" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;">
+                        ${doc.availability.timeSlots.map(slot => `<option value="${slot}">${slot}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="btn btn-primary" style="flex: 1;" onclick="app.confirmReschedule('${ap.id}')">
+                        <i class="fa-solid fa-check"></i> Confirm Reschedule
+                    </button>
+                    <button class="btn btn-outline" style="flex: 1;" onclick="app.closeModal()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        `;
+        overlay.classList.add('active');
+    }
+
+    confirmReschedule(apId) {
+        const newDate = document.getElementById('rescheduleDateInput').value;
+        const newSlot = document.getElementById('rescheduleSlotSelect').value;
+
+        if (!newDate) {
+            this.showToast('Please select a valid date.', 'warning');
+            return;
+        }
+
+        const data = window.dbStore.get();
+        const ap = data.appointments.find(a => a.id === apId);
+        if (ap) {
+            ap.date = newDate;
+            ap.timeSlot = newSlot;
+            ap.status = 'Rescheduled';
+
+            data.notifications.unshift({
+                id: 'NOTIF-' + Date.now(),
+                userId: this.session.id,
+                title: 'Appointment Rescheduled 📅',
+                message: `Booking #${ap.id} with ${ap.doctorName} moved to ${newDate} (${newSlot}).`,
+                time: 'Just now',
+                unread: true
+            });
+
+            window.dbStore.save(data);
+            this.closeModal();
+            this.showToast(`Appointment #${ap.id} rescheduled to ${newDate}!`, 'info');
+            this.renderPatientBookings();
         }
     }
 

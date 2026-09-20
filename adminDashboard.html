@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hela Osu Weda Gedara | Admin Management & Analytics Dashboard</title>
+    <meta name="description" content="Official Admin Control Center & Analytics Dashboard for Hela Osu Weda Gedara Doctor Channeling Network Sri Lanka.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Noto+Sans+Sinhala:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom Dashboard Styles -->
+    <style>
+        .admin-nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: #ffffff;
+            padding: 0.5rem 0.75rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .admin-tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.7rem 1.25rem;
+            border-radius: 12px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.92rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+
+        .admin-tab-btn:hover {
+            background: #f1f5f9;
+            color: #1e5c5c;
+        }
+
+        .admin-tab-btn.active {
+            background: linear-gradient(135deg, #1b5353 0%, #2D8181 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(45, 129, 129, 0.35);
+        }
+
+        .admin-tab-btn i {
+            font-size: 1rem;
+        }
+
+        .admin-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .admin-card:hover {
+            box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08);
+            border-color: #cbd5e1;
+        }
+
+        .kpi-grid-6 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card-v2 {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 1.25rem 1.4rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
+            display: flex;
+            align-items: center;
+            gap: 1.1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-icon-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+            background: #f8fafc;
+            padding: 1rem 1.25rem;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .search-input-wrap {
+            position: relative;
+            min-width: 280px;
+        }
+
+        .search-input-wrap input {
+            width: 100%;
+            padding: 0.6rem 1rem 0.6rem 2.4rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .search-input-wrap i {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .availability-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.2rem 0.55rem;
+            background: #f1f5f9;
+            color: #334155;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 0.15rem;
+        }
+
+        .report-filter-box {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 1.75rem;
+        }
+
+        /* Schedule Manager Grid Styling (Photo 2) */
+        .schedule-manager-card {
+            background: #fdfbf7;
+            border: 1px solid #dce4e8;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+        }
+
+        .schedule-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .schedule-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #1e3a4c;
+            margin: 0;
+        }
+
+        .schedule-controls-box {
+            background: #ffffff;
+            border: 1px solid #e1e8ed;
+            border-radius: 16px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .schedule-grid-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            border: 1px solid #dce4e8;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .schedule-grid-table th {
+            background: #f4f2eb;
+            color: #2c4251;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+            padding: 0.75rem;
+            border: 1px solid #e2e7eb;
+        }
+
+        .schedule-grid-table td {
+            border: 1px solid #e2e7eb;
+            text-align: center;
+            padding: 0;
+            height: 40px;
+        }
+
+        .schedule-grid-table td.time-label {
+            background: #faf9f6;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #526574;
+            padding: 0.5rem;
+        }
+
+        .slot-cell {
+            width: 100%;
+            height: 100%;
+            min-height: 38px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .slot-cell:hover {
+            background: #e8f5ee;
+        }
+
+        .slot-cell.active-slot {
+            background: #68b08b !important; /* Soft green matching Photo 2 */
+        }
+    </style>
+</head>
+<body style="min-height: 100vh; display: flex; flex-direction: column; background-color: #f8fafc;">
+
+    <!-- Sticky Navigation Bar -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="index.html" class="brand-logo">
+                <div class="brand-logo-icon">🌿</div>
+                <div>
+                    <span data-i18n="brandName">Hela Osu Weda Gedara</span>
+                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 500; text-transform: uppercase;" data-i18n="tagline">Admin Control Center</div>
+                </div>
+            </a>
+
+            <div class="nav-controls">
+                <a href="index.html" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-hospital"></i> Main Site
+                </a>
+
+                <!-- Multi-Language Switcher -->
+                <select id="langSelect" style="padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; outline: none;" onchange="window.i18n.setLanguage(this.value)">
+                    <option value="en">🌐 English</option>
+                    <option value="si">🇱🇰 සිංහල</option>
+                    <option value="ta">🇱🇰 தமிழ்</option>
+                </select>
+
+                <!-- Auth User Header -->
+                <div id="userHeaderArea">
+                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                        <span class="role-badge role-admin">
+                            <i class="fa-solid fa-user-shield"></i> System Admin
+                        </span>
+                        <button class="btn btn-outline btn-sm" onclick="app.logout()">
+                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main style="flex: 1; padding-top: 1.5rem; padding-bottom: 3rem;">
+        <div class="container">
+            
+            <!-- ADMIN DASHBOARD HEADER BANNER (Updated: Removed Add Doctor Button per Image 3 request) -->
+            <div style="background: linear-gradient(135deg, #1b5353 0%, #2D8181 100%); color: white; border-radius: 24px; padding: 2rem 2.25rem; margin-bottom: 1.75rem; box-shadow: 0 15px 35px rgba(15, 23, 42, 0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem;">
+                        <span style="background: rgba(255,255,255,0.2); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                            ⚙️ Master Control Panel
+                        </span>
+                        <span style="font-size: 0.85rem; color: #a7f3d0; font-weight: 600;" id="liveClockDisplay">
+                            <!-- JS Clock -->
+                        </span>
+                    </div>
+                    <h1 style="font-size: 1.85rem; font-weight: 800; color: white; margin: 0 0 0.4rem 0;">
+                        System Executive Dashboard
+                    </h1>
+                    <p style="color: rgba(255, 255, 255, 0.88); font-size: 0.95rem; margin: 0; max-width: 650px;">
+                        Manage Wedamahatayas, specialization rosters, patient accounts, system-wide appointment logs, channeling fee rules, and analytics reports across Hela Osu Weda Gedara centers.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <button class="btn btn-outline" onclick="adminController.switchTab('reports')" style="border-color: rgba(255,255,255,0.7); color: white; border-radius: 24px; padding: 0.65rem 1.35rem; font-weight: 700;">
+                        <i class="fa-solid fa-file-export"></i> Generate PDF Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- ADMIN TAB NAVIGATION BAR -->
+            <div class="admin-nav-tabs" id="adminDashboardTabs">
+                <button class="admin-tab-btn active" data-tab="analytics" onclick="adminController.switchTab('analytics')">
+                    <i class="fa-solid fa-chart-pie"></i> Analytics & Overview
+                </button>
+                <button class="admin-tab-btn" data-tab="doctors" onclick="adminController.switchTab('doctors')">
+                    <i class="fa-solid fa-user-doctor"></i> Manage Doctors
+                </button>
+                <button class="admin-tab-btn" data-tab="specializations" onclick="adminController.switchTab('specializations')">
+                    <i class="fa-solid fa-tags"></i> Specializations
+                </button>
+                <button class="admin-tab-btn" data-tab="schedule" onclick="adminController.switchTab('schedule')">
+                    <i class="fa-solid fa-calendar-days"></i> Schedule Manager
+                </button>
+                <button class="admin-tab-btn" data-tab="patients" onclick="adminController.switchTab('patients')">
+                    <i class="fa-solid fa-users-gear"></i> Manage Patients
+                </button>
+                <button class="admin-tab-btn" data-tab="appointments" onclick="adminController.switchTab('appointments')">
+                    <i class="fa-solid fa-calendar-check"></i> All Appointments
+                </button>
+                <button class="admin-tab-btn" data-tab="fees" onclick="adminController.switchTab('fees')">
+                    <i class="fa-solid fa-coins"></i> Channeling Fees
+                </button>
+                <button class="admin-tab-btn" data-tab="reports" onclick="adminController.switchTab('reports')">
+                    <i class="fa-solid fa-file-invoice"></i> Generate Reports
+                </button>
+            </div>
+
+            <!-- ==================================================================== -->
+            <!-- TAB 1: ANALYTICS DASHBOARD FOR ADMIN -->
+            <!-- ==================================================================== -->
+            <section id="tab-analytics" class="admin-tab-view active-tab">
+                
+                <!-- KPI Overview Cards -->
+                <div class="kpi-grid-6">
+                    <div class="kpi-card-v2">
+                        <div class="kpi-icon-box" style="background: #e0f2fe; color: #0284c7;">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.45rem; font-weight: 800; color: #0f172a;" id="kpiTotalRevenue">Rs. 0</div>
+                            <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Total Platform Revenue</div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card-v2">
+                        <div class="kpi-icon-box" style="background: #dcfce7; color: #15803d;">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.45rem; font-weight: 800; color: #0f172a;" id="kpiTotalAppointments">0</div>
+                            <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Total Appointments</div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card-v2">
+                        <div class="kpi-icon-box" style="background: #fef3c7; color: #b45309;">
+                            <i class="fa-solid fa-user-doctor"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.45rem; font-weight: 800; color: #0f172a;" id="kpiTotalDoctors">0</div>
+                            <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Active Wedamahatayas</div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card-v2">
+                        <div class="kpi-icon-box" style="background: #f3e8ff; color: #7e22ce;">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.45rem; font-weight: 800; color: #0f172a;" id="kpiTotalPatients">0</div>
+                            <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Registered Patients</div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card-v2">
+                        <div class="kpi-icon-box" style="background: #fee2e2; color: #b91c1c;">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.45rem; font-weight: 800; color: #0f172a;" id="kpiPendingApprovals">0</div>
+                            <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Pending Approvals</div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card-v2">
+                        <div class="kpi-icon-box" style="background: #ccfbf1; color: #0f766e;">
+                            <i class="fa-solid fa-percent"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.45rem; font-weight: 800; color: #0f172a;" id="kpiPlatformCommission">Rs. 0</div>
+                            <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Platform Earnings (10%)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANALYTICS CHARTS GRID -->
+                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; margin-bottom: 1.75rem;">
+                    
+                    <!-- CHART 1: Appointments per Day (Trends) -->
+                    <div class="admin-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="font-size: 1.1rem; color: #0f172a; font-weight: 700; margin: 0;">
+                                    <i class="fa-solid fa-chart-line" style="color: #2D8181;"></i> Appointments Per Day (Weekly Trend)
+                                </h3>
+                                <span style="font-size: 0.8rem; color: #64748b;">Daily booking volume performance</span>
+                            </div>
+                            <span class="role-badge role-patient" style="font-size: 0.75rem;">7 Days View</span>
+                        </div>
+                        <canvas id="chartAppointmentTrends" height="150"></canvas>
+                    </div>
+
+                    <!-- CHART 2: Specialization Distribution -->
+                    <div class="admin-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="font-size: 1.1rem; color: #0f172a; font-weight: 700; margin: 0;">
+                                    <i class="fa-solid fa-chart-pie" style="color: #0284c7;"></i> Specialization Share
+                                </h3>
+                                <span style="font-size: 0.8rem; color: #64748b;">Appointments per Specialization</span>
+                            </div>
+                        </div>
+                        <canvas id="chartSpecializations" height="150"></canvas>
+                    </div>
+
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    
+                    <!-- CHART 3: Appointments per Doctor -->
+                    <div class="admin-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="font-size: 1.1rem; color: #0f172a; font-weight: 700; margin: 0;">
+                                    <i class="fa-solid fa-chart-column" style="color: #d97706;"></i> Appointments Per Doctor
+                                </h3>
+                                <span style="font-size: 0.8rem; color: #64748b;">Top channelling Wedamahatayas by booking count</span>
+                            </div>
+                        </div>
+                        <canvas id="chartDoctorAppointments" height="140"></canvas>
+                    </div>
+
+                    <!-- CHART 4: Revenue Share per Doctor -->
+                    <div class="admin-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="font-size: 1.1rem; color: #0f172a; font-weight: 700; margin: 0;">
+                                    <i class="fa-solid fa-wallet" style="color: #10b981;"></i> Revenue Generated Per Doctor (LKR)
+                                </h3>
+                                <span style="font-size: 0.8rem; color: #64748b;">Gross revenue split by medical practitioner</span>
+                            </div>
+                        </div>
+                        <canvas id="chartRevenue" height="140"></canvas>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- ==================================================================== -->
+            <!-- TAB 2: MANAGE DOCTORS -->
+            <!-- ==================================================================== -->
+            <section id="tab-doctors" class="admin-tab-view" style="display: none;">
+                <div class="admin-card">
+                    
+                    <div class="table-toolbar">
+                        <div>
+                            <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 0.2rem 0;">
+                                Wedamahataya Doctor Directory & Registrations
+                            </h3>
+                            <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+                                Manage practitioner details, edit specializations, and manage account statuses.
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                            <div class="search-input-wrap">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="doctorSearchInput" placeholder="Search doctor by name or reg no..." oninput="adminController.filterDoctorsTable(this.value)">
+                            </div>
+
+                            <select id="doctorSpecFilter" style="padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 0.88rem; outline: none;" onchange="adminController.filterDoctorsTable()">
+                                <option value="">All Specializations</option>
+                                <!-- Populated dynamically -->
+                            </select>
+
+                            <select id="doctorStatusFilter" style="padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 0.88rem; outline: none;" onchange="adminController.filterDoctorsTable()">
+                                <option value="">All Statuses</option>
+                                <option value="approved">Active / Approved</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="pending">Pending Approval</option>
+                            </select>
+
+                            <button class="btn btn-primary" onclick="adminController.openAddDoctorModal()">
+                                <i class="fa-solid fa-user-plus"></i> Add New Doctor
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Doctor Name</th>
+                                    <th>Specialization & Title</th>
+                                    <th>Branch / Hospital</th>
+                                    <th>Base Fee</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminDoctorsTableBody">
+                                <!-- Rendered dynamically via adminController -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ==================================================================== -->
+            <!-- TAB 3: MANAGE SPECIALIZATIONS (New Feature) -->
+            <!-- ==================================================================== -->
+            <section id="tab-specializations" class="admin-tab-view" style="display: none;">
+                <div class="admin-card">
+                    
+                    <div class="table-toolbar">
+                        <div>
+                            <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 0.2rem 0;">
+                                <i class="fa-solid fa-tags" style="color: #2D8181;"></i> Medical Specialization Roster & Management
+                            </h3>
+                            <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+                                Add, edit, and configure medical specializations, treatment categories, and active statuses.
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                            <div class="search-input-wrap">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="specializationSearchInput" placeholder="Search specialization name or category..." oninput="adminController.filterSpecializationsTable(this.value)">
+                            </div>
+
+                            <button class="btn btn-primary" onclick="adminController.openAddSpecializationModal()">
+                                <i class="fa-solid fa-plus"></i> Add New Specialization
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Specialization Name & Code</th>
+                                    <th>Department Category</th>
+                                    <th>Description / Clinical Scope</th>
+                                    <th>Assigned Doctors</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminSpecializationsTableBody">
+                                <!-- Rendered dynamically via adminController -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ==================================================================== -->
+            <!-- TAB 4: THERAPIST / DOCTOR SCHEDULE MANAGER (Photo 2) -->
+            <!-- ==================================================================== -->
+            <section id="tab-schedule" class="admin-tab-view" style="display: none;">
+                <div class="schedule-manager-card">
+                    
+                    <div class="schedule-header-bar">
+                        <div>
+                            <h2 class="schedule-title">
+                                <i class="fa-solid fa-calendar-week" style="color: #2D8181;"></i> Therapist Schedule Manager
+                            </h2>
+                            <span style="font-size: 0.85rem; color: #64748b;">Manage weekly working hour slots for therapists and doctors.</span>
+                        </div>
+                        <div style="display: flex; gap: 0.6rem; align-items: center;">
+                            <span id="scheduleEditStatusBadge" style="background: #f1f5f9; color: #64748b; padding: 0.35rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; border: 1px solid #cbd5e1;">
+                                🔒 Read Only
+                            </span>
+                            <button id="btnToggleScheduleEdit" class="btn btn-outline btn-sm" onclick="adminController.toggleScheduleEditMode()" style="border-radius: 10px; font-weight: 700; padding: 0.5rem 1rem; border-color: #2D8181; color: #2D8181;">
+                                <i class="fa-solid fa-pen"></i> Enable Editing
+                            </button>
+                            <button class="btn btn-primary" onclick="adminController.saveScheduleChanges()" style="background: #3b7b9e; border: none; font-weight: 700; padding: 0.55rem 1.3rem; border-radius: 10px;">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="schedule-controls-box">
+                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                            <label style="font-weight: 700; font-size: 0.9rem; color: #2c4251;">Select Therapist:</label>
+                            <select id="scheduleDoctorSelect" style="padding: 0.55rem 0.85rem; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 600; font-size: 0.9rem; outline: none; min-width: 240px;" onchange="adminController.loadDoctorSchedule(this.value)">
+                                <!-- Populated dynamically via JS -->
+                            </select>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn btn-outline btn-sm" onclick="adminController.refreshScheduleGrid()" style="border-radius: 8px;">
+                                <i class="fa-solid fa-rotate"></i> Refresh
+                            </button>
+                            <button class="btn btn-outline btn-sm" onclick="adminController.navigateScheduleWeek(-1)" style="border-radius: 8px;">
+                                &lt; Previous Week
+                            </button>
+                            <span id="scheduleWeekDisplay" style="font-weight: 700; color: #1e3a4c; font-size: 0.92rem; padding: 0 0.5rem;">
+                                Jul 06, 2026 - Jul 12, 2026
+                            </span>
+                            <button class="btn btn-outline btn-sm" onclick="adminController.navigateScheduleWeek(1)" style="border-radius: 8px;">
+                                Next Week &gt;
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TIMETABLE GRID -->
+                    <div class="table-responsive">
+                        <table class="schedule-grid-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 100px;">Time</th>
+                                    <th>MONDAY<br><span style="font-size: 0.75rem; font-weight: normal; color: #64748b;" id="headMon">Jul 06</span></th>
+                                    <th>TUESDAY<br><span style="font-size: 0.75rem; font-weight: normal; color: #64748b;" id="headTue">Jul 07</span></th>
+                                    <th>WEDNESDAY<br><span style="font-size: 0.75rem; font-weight: normal; color: #64748b;" id="headWed">Jul 08</span></th>
+                                    <th>THURSDAY<br><span style="font-size: 0.75rem; font-weight: normal; color: #64748b;" id="headThu">Jul 09</span></th>
+                                    <th>FRIDAY<br><span style="font-size: 0.75rem; font-weight: normal; color: #64748b;" id="headFri">Jul 10</span></th>
+                                    <th>SATURDAY<br><span style="font-size: 0.75rem; font-weight: normal; color: #64748b;" id="headSat">Jul 11</span></th>
+                                    <th>SUNDAY<br><span style="font-size: 0.75rem; font-weight: normal; color: #64748b;" id="headSun">Jul 12</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="scheduleGridBody">
+                                <!-- Dynamic Timetable Rows 08:00 to 17:00 rendered via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ==================================================================== -->
+            <!-- TAB 5: MANAGE PATIENTS -->
+            <!-- ==================================================================== -->
+            <section id="tab-patients" class="admin-tab-view" style="display: none;">
+                <div class="admin-card">
+                    
+                    <div class="table-toolbar">
+                        <div>
+                            <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 0.2rem 0;">
+                                Patient Account Management
+                            </h3>
+                            <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+                                Monitor patient accounts across Sri Lanka, view booking history, and suspend/reactivate profiles.
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                            <div class="search-input-wrap">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="patientSearchInput" placeholder="Search patient by name, NIC, or email..." oninput="adminController.filterPatientsTable(this.value)">
+                            </div>
+
+                            <select id="patientStatusFilter" style="padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 0.88rem; outline: none;" onchange="adminController.filterPatientsTable()">
+                                <option value="">All Statuses</option>
+                                <option value="active">Active</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Patient Name</th>
+                                    <th>Contact Info</th>
+                                    <th>NIC Number</th>
+                                    <th>Age & Gender</th>
+                                    <th>Registered Date</th>
+                                    <th>Status</th>
+                                    <th>Account Controls</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminPatientsTableBody">
+                                <!-- Rendered dynamically via adminController -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ==================================================================== -->
+            <!-- TAB 6: VIEW ALL APPOINTMENTS ACROSS SYSTEM -->
+            <!-- ==================================================================== -->
+            <section id="tab-appointments" class="admin-tab-view" style="display: none;">
+                <div class="admin-card">
+                    
+                    <div class="table-toolbar">
+                        <div>
+                            <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 0.2rem 0;">
+                                System-Wide Appointment Records Log
+                            </h3>
+                            <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+                                Live audit log of all doctor channelings, token statuses, and payment vouchers.
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                            <div class="search-input-wrap">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="appointmentSearchInput" placeholder="Search booking ID, patient, doctor..." oninput="adminController.filterAppointmentsTable(this.value)">
+                            </div>
+
+                            <select id="appointmentStatusFilter" style="padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 0.88rem; outline: none;" onchange="adminController.filterAppointmentsTable()">
+                                <option value="">All Booking Statuses</option>
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+
+                            <button class="btn btn-outline" onclick="adminController.exportAppointmentsCSV()">
+                                <i class="fa-solid fa-file-csv"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Booking ID</th>
+                                    <th>Token #</th>
+                                    <th>Patient</th>
+                                    <th>Doctor & Specialization</th>
+                                    <th>Channeling Date & Time</th>
+                                    <th>Total Fee</th>
+                                    <th>Status</th>
+                                    <th>Receipt / Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminAppointmentsTableBody">
+                                <!-- Rendered dynamically via adminController -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ==================================================================== -->
+            <!-- TAB 7: MANAGE CHANNELING FEES -->
+            <!-- ==================================================================== -->
+            <section id="tab-fees" class="admin-tab-view" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1.1fr; gap: 1.5rem;">
+                    
+                    <!-- Fee Configuration Controls -->
+                    <div class="admin-card">
+                        <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.25rem;">
+                            <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin: 0 0 0.3rem 0;">
+                                <i class="fa-solid fa-sliders" style="color: #2D8181;"></i> System Fee Policy & Rates
+                            </h3>
+                            <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+                                Adjust baseline platform commission percentage, standard center charges, and surcharge rates.
+                            </p>
+                        </div>
+
+                        <form id="feeConfigForm" onsubmit="event.preventDefault(); adminController.saveFeeConfiguration();">
+                            <div style="margin-bottom: 1.1rem;">
+                                <label style="font-weight: 700; font-size: 0.88rem; color: #334155; display: block; margin-bottom: 0.4rem;">
+                                    Platform Commission (%)
+                                </label>
+                                <div style="position: relative;">
+                                    <input type="number" id="feeConfigCommission" min="0" max="50" step="0.5" value="10" required style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 600;" oninput="adminController.recalculateFeeSimulator()">
+                                </div>
+                                <span style="font-size: 0.78rem; color: #64748b;">Percentage deducted from total fee as system operational margin.</span>
+                            </div>
+
+                            <div style="margin-bottom: 1.1rem;">
+                                <label style="font-weight: 700; font-size: 0.88rem; color: #334155; display: block; margin-bottom: 0.4rem;">
+                                    Standard Hela Osu Hospital / Center Fee (LKR)
+                                </label>
+                                <input type="number" id="feeConfigHospitalFee" min="0" step="50" value="500" required style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 600;" oninput="adminController.recalculateFeeSimulator()">
+                                <span style="font-size: 0.78rem; color: #64748b;">Flat facility charge added to each doctor appointment.</span>
+                            </div>
+
+                            <div style="margin-bottom: 1.1rem;">
+                                <label style="font-weight: 700; font-size: 0.88rem; color: #334155; display: block; margin-bottom: 0.4rem;">
+                                    Emergency / Weekend Surcharge (LKR)
+                                </label>
+                                <input type="number" id="feeConfigSurcharge" min="0" step="50" value="300" required style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 600;" oninput="adminController.recalculateFeeSimulator()">
+                                <span style="font-size: 0.78rem; color: #64748b;">Additional fee applied for urgent or after-hours consultations.</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; border-radius: 12px; font-weight: 700; margin-top: 0.5rem;">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Global Fee Settings
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Live Channeling Fee Breakdown Simulator -->
+                    <div class="admin-card" style="background: linear-gradient(145deg, #ffffff, #f8fafc);">
+                        <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.25rem;">
+                            <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin: 0 0 0.3rem 0;">
+                                <i class="fa-solid fa-calculator" style="color: #f59e0b;"></i> Fee Simulator & Doctor List
+                            </h3>
+                            <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+                                Test patient total charge breakdown based on selected doctor base fee.
+                            </p>
+                        </div>
+
+                        <div style="background: white; padding: 1.25rem; border-radius: 14px; border: 1px solid #e2e8f0; margin-bottom: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                            <div style="margin-bottom: 1rem;">
+                                <label style="font-size: 0.82rem; font-weight: 700; color: #475569;">Select Sample Doctor</label>
+                                <select id="feeSimDoctorSelect" style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem;" onchange="adminController.recalculateFeeSimulator()">
+                                    <!-- Populated via JS -->
+                                </select>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.9rem; padding-top: 0.5rem; border-top: 1px dashed #cbd5e1;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: #64748b;">Doctor Base Consultation Fee:</span>
+                                    <strong id="simDocFee">Rs. 0.00</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: #64748b;">Hela Osu Facility & Admin Fee:</span>
+                                    <strong id="simHospitalFee">Rs. 0.00</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; color: #0f766e; font-weight: 600;">
+                                    <span>Estimated Platform Revenue (Share):</span>
+                                    <strong id="simPlatformEarn">Rs. 0.00</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 1.15rem; font-weight: 800; color: #1b5353; padding-top: 0.6rem; border-top: 2px solid #e2e8f0; margin-top: 0.4rem;">
+                                    <span>Total Patient Charge:</span>
+                                    <span id="simTotalCharge">Rs. 0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ==================================================================== -->
+            <!-- TAB 8: GENERATE REPORTS -->
+            <!-- ==================================================================== -->
+            <section id="tab-reports" class="admin-tab-view" style="display: none;">
+                
+                <div class="report-filter-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <h3 style="font-size: 1.3rem; font-weight: 800; color: #0f172a; margin: 0 0 0.2rem 0;">
+                                <i class="fa-solid fa-file-invoice" style="color: #2D8181;"></i> Hela Osu Channeling Executive Report Generator
+                            </h3>
+                            <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+                                Generate and export official reports for doctor appointments, platform revenue, and cancellations.
+                            </p>
+                        </div>
+                        
+                        <div style="display: flex; gap: 0.6rem;">
+                            <button class="btn btn-primary" onclick="adminController.generateReportPDF()" style="background: linear-gradient(135deg, #1b5353, #2D8181); border: none;">
+                                <i class="fa-solid fa-file-pdf"></i> Download PDF Report
+                            </button>
+                            <button class="btn btn-outline" onclick="window.print()">
+                                <i class="fa-solid fa-print"></i> Print Document
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div>
+                            <label style="font-size: 0.82rem; font-weight: 700; color: #475569; display: block; margin-bottom: 0.35rem;">
+                                Select Report Type
+                            </label>
+                            <select id="reportCategorySelect" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 600; outline: none;" onchange="adminController.renderReportView()">
+                                <option value="doctor-appointments">Appointments per Doctor</option>
+                                <option value="revenue-summary">Financial & Revenue Report</option>
+                                <option value="cancellations">Cancellations & Refunds Log</option>
+                                <option value="specializations">Specialization Popularity</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.82rem; font-weight: 700; color: #475569; display: block; margin-bottom: 0.35rem;">
+                                Date Range Filter
+                            </label>
+                            <select id="reportDateRange" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 600; outline: none;" onchange="adminController.renderReportView()">
+                                <option value="all">All Time History</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.82rem; font-weight: 700; color: #475569; display: block; margin-bottom: 0.35rem;">
+                                Doctor Filter
+                            </label>
+                            <select id="reportDoctorSelect" style="width: 100%; padding: 0.6rem; border-radius: 10px; border: 1px solid #cbd5e1; outline: none;" onchange="adminController.renderReportView()">
+                                <option value="">All Doctors</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REPORT SUMMARY CARDS & PRINTABLE CONTAINER -->
+                <div class="admin-card" id="printableReportContainer">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2D8181; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <h2 style="color: #1b5353; font-weight: 800; font-size: 1.4rem; margin: 0 0 0.2rem 0;">
+                                🌿 HELA OSU WEDA GEDARA - EXECUTIVE MANAGEMENT REPORT
+                            </h2>
+                            <p style="font-size: 0.85rem; color: #64748b; margin: 0;" id="reportSubtitle">
+                                Official System Analytics & Activity Log
+                            </p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="role-badge role-admin" style="font-size: 0.8rem;">AUTHENTICATED SYSTEM REPORT</span>
+                            <p style="font-size: 0.78rem; color: #64748b; margin-top: 0.3rem;" id="reportGeneratedDate">
+                                Generated on: 2026-09-20
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- REPORT METRICS HEADER -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.75rem; background: #f8fafc; padding: 1.25rem; border-radius: 14px; border: 1px solid #e2e8f0;" id="reportMetricsSummary">
+                        <!-- Populated dynamically -->
+                    </div>
+
+                    <!-- REPORT DATA TABLE -->
+                    <div class="table-responsive">
+                        <table class="custom-table" id="reportDataTable">
+                            <thead id="reportTableHead">
+                                <!-- Populated dynamically -->
+                            </thead>
+                            <tbody id="reportTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer style="background: #0f172a; color: white; padding: 2.5rem 0 1.5rem 0; margin-top: 4rem;">
+        <div class="container" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2rem; border-bottom: 1px solid #334155; padding-bottom: 2rem;">
+            <div>
+                <h3 style="color: white; margin-bottom: 0.5rem;">🌿 Hela Osu Weda Gedara Channeling</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem;">Connecting Sri Lanka with trusted Wedamahataya specialists across all Hela Osu branches.</p>
+            </div>
+            <div>
+                <p style="font-weight: 600;">System Support Hotline</p>
+                <p style="color: #10b981; font-weight: 800; font-size: 1.2rem;"><i class="fa-solid fa-headset"></i> Support 1390</p>
+            </div>
+        </div>
+        <div class="container" style="text-align: center; color: #64748b; font-size: 0.85rem; padding-top: 1.5rem;" data-i18n="footerCopy">
+            © 2026 Hela Osu Weda Gedara. All Rights Reserved.
+        </div>
+    </footer>
+
+    <!-- GLOBAL MODAL OVERLAY CONTAINER -->
+    <div id="globalModalOverlay" class="modal-overlay">
+        <div id="modalContent" class="modal-container">
+            <!-- Dynamic Modal Content rendered via JS -->
+        </div>
+    </div>
+
+    <!-- FLOATING AI ASSISTANT CHATBOT -->
+    <div class="chatbot-widget">
+        <div id="chatbotBox" class="chatbot-box">
+            <div class="chatbot-header">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fa-solid fa-robot"></i>
+                    <strong>Hela Osu AI Health Assistant</strong>
+                </div>
+                <button style="background: transparent; border: none; color: white; font-size: 1.25rem; cursor: pointer;" onclick="window.chatbot.toggle()">&times;</button>
+            </div>
+            <div id="chatMessagesContainer" class="chatbot-messages">
+                <!-- Messages rendered via JS -->
+            </div>
+            <div class="chatbot-input-area">
+                <input type="text" id="chatInput" placeholder="Ask about Hela doctors or system..." onkeypress="if(event.key === 'Enter') { window.chatbot.sendMessage(this.value); this.value = ''; }" />
+                <button class="btn btn-primary btn-sm" onclick="const inp = document.getElementById('chatInput'); window.chatbot.sendMessage(inp.value); inp.value = '';">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+        <button class="chatbot-btn" onclick="window.chatbot.toggle()">
+            <i class="fa-solid fa-comment-medical"></i>
+        </button>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- JS MODULE LOADERS -->
+    <script src="js/data.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/pdf-generator.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/chatbot.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/api.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Start clock display
+            const updateClock = () => {
+                const clock = document.getElementById('liveClockDisplay');
+                if (clock) {
+                    const now = new Date();
+                    clock.textContent = '🕒 ' + now.toLocaleTimeString() + ' | ' + now.toLocaleDateString();
+                }
+            };
+            setInterval(updateClock, 1000);
+            updateClock();
+        });
+    </script>
+</body>
+</html>

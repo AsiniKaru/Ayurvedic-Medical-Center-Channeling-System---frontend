@@ -266,7 +266,15 @@ const DEFAULT_DATA = {
         standardHospitalFee: 500,
         contactEmail: 'support@helaosu.lk',
         contactHotline: '1390 / +94 11 234 5678'
-    }
+    },
+
+    specializations: [
+        { id: 'spec-1', name: 'Ayurveda & Traditional Healing', code: 'AYU-01', category: 'Traditional Medicine', description: 'Holistic Sri Lankan Weda Kam, Panchakarma, and herbal healing.', status: 'active' },
+        { id: 'spec-2', name: 'Ayurvedic Wellness & Vitality', code: 'AYU-02', category: 'Wellness & Prevention', description: 'Ayurvedic nutrition, hypertension, cardiac care, and rejuvenation.', status: 'active' },
+        { id: 'spec-3', name: 'Pediatrics & Child Health', code: 'AYU-03', category: 'Pediatrics', description: 'Bala Roga Weda, herbal immunizations, and pediatric digestive health.', status: 'active' },
+        { id: 'spec-4', name: 'Spine & Joint Rehabilitation', code: 'AYU-04', category: 'Orthopedics', description: 'Kadu Wedamahataya joint alignment, arthritis, and spine oil therapy.', status: 'active' },
+        { id: 'spec-5', name: 'Dermatology & Skin Care', code: 'AYU-05', category: 'Dermatology', description: 'Herbal skin restoration, eczema, acne, and complexion wellness.', status: 'active' }
+    ]
 };
 
 class DataStore {
@@ -283,7 +291,12 @@ class DataStore {
 
     get() {
         try {
-            return JSON.parse(localStorage.getItem('hela_osu_db')) || DEFAULT_DATA;
+            const data = JSON.parse(localStorage.getItem('hela_osu_db')) || DEFAULT_DATA;
+            if (!data.specializations || data.specializations.length === 0) {
+                data.specializations = DEFAULT_DATA.specializations;
+                this.save(data);
+            }
+            return data;
         } catch (e) {
             console.error('Failed to parse localStorage data', e);
             return DEFAULT_DATA;
