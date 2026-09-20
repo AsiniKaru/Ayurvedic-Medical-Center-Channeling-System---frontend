@@ -16,7 +16,25 @@ class AppController {
     }
 
     bindEvents() {
-        // Event bindings for core controls if needed
+        document.addEventListener('click', (e) => {
+            const navLink = e.target.closest('.nav-link[data-view]');
+            if (navLink) {
+                const viewId = navLink.getAttribute('data-view');
+                if (viewId) {
+                    e.preventDefault();
+                    this.switchView(viewId);
+                }
+            }
+        });
+    }
+
+    canAccessView(viewId) {
+        if (!viewId || viewId === 'view-login' || viewId === 'view-register' || viewId === 'view-home') return true;
+        if (!this.session) return false;
+        const role = this.session.role;
+        if (viewId.startsWith('view-admin') && role !== 'admin') return false;
+        if (viewId.startsWith('view-doctor') && role !== 'doctor') return false;
+        return true;
     }
 
     init() {
@@ -198,6 +216,17 @@ class AppController {
         } else if (role === 'doctor') {
             this.renderDoctorPortal();
         } else {
+            const patientWelcomeTitle = document.getElementById('patientWelcomeTitle');
+            const patientActiveCountBadge = document.getElementById('patientActiveCountBadge');
+            if (patientWelcomeTitle && session.name) {
+                patientWelcomeTitle.textContent = `Welcome back, ${session.name}!`;
+            }
+            if (patientActiveCountBadge && role === 'patient') {
+                const data = window.dbStore.get();
+                const activeCount = data.appointments.filter(a => a.patientId === session.id && (a.status === 'Upcoming' || a.status === 'Rescheduled')).length;
+                patientActiveCountBadge.textContent = activeCount;
+            }
+
             this.renderDoctorsGrid();
             this.renderPatientBookings();
             this.renderReportConsultations();
@@ -243,15 +272,6 @@ class AppController {
                 }
             });
         }
-    }
-
-    canAccessView(viewId) {
-        if (!viewId || viewId === 'view-login' || viewId === 'view-register' || viewId === 'view-home') return true;
-        if (!this.session) return false;
-        const role = this.session.role;
-        if (viewId === 'view-admin-dashboard' && role !== 'admin') return false;
-        if (viewId === 'view-doctor-queue' && role !== 'doctor') return false;
-        return true;
     }
 
     switchView(viewId) {
@@ -678,15 +698,15 @@ class AppController {
             btn.disabled = true;
         }
 
-        setTimeout(() => {
+        setTimeout(async () => {
             const data = window.dbStore.get();
             const doc = this.selectedDoctorForBooking;
             const newAp = {
                 id: 'AP-' + Math.floor(1000 + Math.random() * 9000),
-                patientId: this.session.id,
-                patientName: this.session.name,
-                patientEmail: this.session.email || 'patient@helaosu.lk',
-                patientPhone: this.session.phone || '0771234567',
+                patientId: this.session ? this.session.id : 1,
+                patientName: this.session ? this.session.name : 'Patient',
+                patientEmail: (this.session && this.session.email) ? this.session.email : 'patient@helaosu.lk',
+                patientPhone: (this.session && this.session.phone) ? this.session.phone : '0771234567',
                 doctorId: doc.id,
                 doctorName: doc.name,
                 specialization: doc.specialization,
@@ -709,7 +729,7 @@ class AppController {
 
             data.notifications.unshift({
                 id: 'NOTIF-' + Date.now(),
-                userId: this.session.id,
+                userId: this.session ? this.session.id : 1,
                 title: 'Hela Osu Channeling Confirmed 🎉',
                 message: `Booking #${newAp.id} reserved with ${doc.name} for ${newAp.date} (Token #${newAp.tokenNo}). E-Voucher sent to email.`,
                 time: 'Just now',
@@ -717,6 +737,21 @@ class AppController {
             });
 
             window.dbStore.save(data);
+
+            // Connect to Spring Boot backend
+            try {
+                if (window.HelaApi) {
+                    await HelaApi.appointments.book({
+                        patientId: 1,
+                        sessionId: 1,
+                        queueNumber: newAp.tokenNo,
+                        status: 'BOOKED',
+                        paymentStatus: newAp.paymentStatus
+                    });
+                }
+            } catch (e) {
+                console.warn("Backend appointment booking offline:", e);
+            }
 
             this.closeModal();
             this.showToast(`🎉 Booking Successful! Token #${newAp.tokenNo} reserved. E-Channeling Voucher sent to email!`, 'success');
@@ -1002,6 +1037,37 @@ class AppController {
         this.renderReportConsultations();
     }
 
+    setRegisterRole(role) {
+        const regRoleInput = document.getElementById('regRoleInput');
+        const regFormTitle = document.getElementById('regFormTitle');
+        const regFormSubtitle = document.getElementById('regFormSubtitle');
+        const patientRegFields = document.getElementById('patientRegFields');
+        const doctorRegFields = document.getElementById('doctorRegFields');
+        const regSubmitBtn = document.getElementById('regSubmitBtn');
+        const patBtn = document.getElementById('regTypePatientBtn');
+        const docBtn = document.getElementById('regTypeDoctorBtn');
+
+        if (regRoleInput) regRoleInput.value = role;
+
+        if (role === 'doctor') {
+            if (regFormTitle) regFormTitle.textContent = 'Register Doctor Account';
+            if (regFormSubtitle) regFormSubtitle.textContent = 'Submit practitioner registration for Admin approval';
+            if (patientRegFields) patientRegFields.style.display = 'none';
+            if (doctorRegFields) doctorRegFields.style.display = 'block';
+            if (regSubmitBtn) regSubmitBtn.innerHTML = '<i class="fa-solid fa-user-doctor"></i> Submit Doctor Registration';
+            if (patBtn) { patBtn.style.background = 'transparent'; patBtn.style.color = '#475569'; }
+            if (docBtn) { docBtn.style.background = '#1b5353'; docBtn.style.color = 'white'; }
+        } else {
+            if (regFormTitle) regFormTitle.textContent = 'Register Patient Account';
+            if (regFormSubtitle) regFormSubtitle.textContent = 'Join Hela Osu Weda Gedara Channeling Network';
+            if (patientRegFields) patientRegFields.style.display = 'block';
+            if (doctorRegFields) doctorRegFields.style.display = 'none';
+            if (regSubmitBtn) regSubmitBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> Register Patient Account';
+            if (patBtn) { patBtn.style.background = '#1b5353'; patBtn.style.color = 'white'; }
+            if (docBtn) { docBtn.style.background = 'transparent'; docBtn.style.color = '#475569'; }
+        }
+    }
+
     // -------------------------------------------------------------------------
     // DOCTOR PORTAL FUNCTIONS
     // -------------------------------------------------------------------------
@@ -1010,63 +1076,222 @@ class AppController {
         if (!this.session || this.session.role !== 'doctor') return;
         const data = window.dbStore.get();
         
-        // Update doctor profile header name
+        // Find doctor object matching logged in session or default to doc-101
+        const doc = data.doctors.find(d => d.username === this.session.username || d.id === this.session.id) || data.doctors[0];
+        this.currentDoctorObj = doc;
+
+        // Pending Approval Check
+        const pendingAlert = document.getElementById('doctorPendingAlert');
+        const pendingRegNo = document.getElementById('docPendingRegNo');
+        const docStatusBadge = document.getElementById('docStatusBadge');
+
+        if (doc && doc.status === 'pending') {
+            if (pendingAlert) pendingAlert.style.display = 'block';
+            if (pendingRegNo) pendingRegNo.textContent = doc.regNo || 'SL-AYU-XXXX';
+            if (docStatusBadge) {
+                docStatusBadge.textContent = 'PENDING APPROVAL';
+                docStatusBadge.style.background = '#f59e0b';
+            }
+        } else {
+            if (pendingAlert) pendingAlert.style.display = 'none';
+            if (docStatusBadge) {
+                docStatusBadge.textContent = 'VERIFIED';
+                docStatusBadge.style.background = 'rgba(255, 255, 255, 0.2)';
+            }
+        }
+
+        // Update Doctor Hero Header
         const docNameElem = document.getElementById('docPortalName');
-        if (docNameElem) docNameElem.textContent = this.session.name;
+        const docSpecElem = document.getElementById('docPortalSpec');
+        const docHospElem = document.getElementById('docPortalHospital');
+        if (docNameElem && doc) docNameElem.textContent = doc.name;
+        if (docSpecElem && doc) docSpecElem.textContent = `${doc.specialization} • ${doc.regNo || 'SL-AYU-4029'}`;
+        if (docHospElem && doc) docHospElem.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${doc.hospital || 'Hela Osu Weda Gedara - Galle Branch'}`;
+
+        // Get all appointments for this doctor (or doc-101)
+        const myAppointments = data.appointments.filter(a => a.doctorId === doc.id || a.doctorId === 'doc-101');
+        const myReports = data.reportConsultations.filter(c => c.doctorId === doc.id || c.doctorId === 'doc-101');
+
+        // Update KPI Stats Cards
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayCount = myAppointments.filter(a => a.date === todayStr).length;
+        const upcomingCount = myAppointments.filter(a => a.status === 'Upcoming').length;
+        const completedCount = myAppointments.filter(a => a.status === 'Completed').length;
+        const unrepliedReports = myReports.filter(c => c.status !== 'Replied').length;
+
+        const statToday = document.getElementById('statDocTodayCount');
+        const statUpcoming = document.getElementById('statDocUpcomingCount');
+        const statCompleted = document.getElementById('statDocCompletedCount');
+        const statReports = document.getElementById('statDocReportsCount');
+        const unreadBadge = document.getElementById('unreadReportBadge');
+
+        if (statToday) statToday.textContent = todayCount;
+        if (statUpcoming) statUpcoming.textContent = upcomingCount;
+        if (statCompleted) statCompleted.textContent = completedCount;
+        if (statReports) statReports.textContent = myReports.length;
+        if (unreadBadge) unreadBadge.textContent = unrepliedReports;
 
         // Render Session Queue Table
         const tbodyQueue = document.getElementById('doctorQueueTableBody');
+        const searchInput = document.getElementById('docQueueSearch');
+        const statusFilter = document.getElementById('docQueueStatusFilter');
+        const totalLabel = document.getElementById('docQueueTotalLabel');
+
         if (tbodyQueue) {
-            const myQueue = data.appointments.filter(a => a.doctorId === this.session.id || a.doctorId === 'doc-101');
-            tbodyQueue.innerHTML = myQueue.map(ap => `
-                <tr>
-                    <td><strong>Token #${ap.tokenNo}</strong></td>
-                    <td>${ap.patientName}<br><span style="font-size: 0.8rem; color: #64748b;">Ph: ${ap.patientPhone}</span></td>
-                    <td>${ap.date} | ${ap.timeSlot}</td>
-                    <td>${ap.notes}</td>
-                    <td>
-                        <span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; background: ${
-                            ap.status === 'Completed' ? '#dcfce7; color: #15803d;' : '#fef3c7; color: #b45309;'
-                        }">${ap.status}</span>
-                    </td>
-                    <td>
-                        ${ap.status !== 'Completed' ? `
-                            <button class="btn btn-sm btn-primary" onclick="app.openPrescriptionModal('${ap.id}')">
-                                <i class="fa-solid fa-stethoscope"></i> Complete & Prescribe
-                            </button>
-                        ` : `
-                            <button class="btn btn-sm btn-outline" onclick="app.viewPrescription('${ap.id}')">
-                                View Rx
-                            </button>
-                        `}
-                    </td>
-                </tr>
-            `).join('');
+            let filteredQueue = [...myAppointments];
+
+            const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const statusVal = statusFilter ? statusFilter.value : 'All';
+
+            if (searchQuery) {
+                filteredQueue = filteredQueue.filter(a => 
+                    a.patientName.toLowerCase().includes(searchQuery) ||
+                    (a.tokenNo && a.tokenNo.toString().includes(searchQuery)) ||
+                    (a.patientPhone && a.patientPhone.includes(searchQuery))
+                );
+            }
+
+            if (statusVal !== 'All') {
+                filteredQueue = filteredQueue.filter(a => a.status === statusVal);
+            }
+
+            if (totalLabel) totalLabel.textContent = `Showing ${filteredQueue.length} Session Tokens`;
+
+            if (filteredQueue.length === 0) {
+                tbodyQueue.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">No session appointments match your search filter.</td></tr>`;
+            } else {
+                tbodyQueue.innerHTML = filteredQueue.map(ap => `
+                    <tr>
+                        <td>
+                            <div style="width: 38px; height: 38px; background: #e0f2fe; color: #0284c7; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.95rem;">
+                                #${ap.tokenNo || 1}
+                            </div>
+                        </td>
+                        <td>
+                            <strong style="color: #0f172a; font-size: 0.95rem;">${ap.patientName}</strong><br>
+                            <span style="font-size: 0.8rem; color: #64748b;"><i class="fa-solid fa-phone"></i> ${ap.patientPhone || '0771234567'}</span>
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; color: #334155; font-size: 0.88rem;"><i class="fa-solid fa-calendar-day" style="color: #2D8181;"></i> ${ap.date}</div>
+                            <div style="font-size: 0.8rem; color: #64748b;"><i class="fa-solid fa-clock"></i> ${ap.timeSlot}</div>
+                        </td>
+                        <td style="max-width: 220px;">
+                            <span style="font-size: 0.85rem; color: #475569; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${ap.notes || 'Routine channeling consultation'}">
+                                ${ap.notes || 'Routine channeling consultation.'}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-block; background: ${
+                                ap.status === 'Completed' ? '#dcfce7; color: #15803d;' :
+                                ap.status === 'Cancelled' ? '#fee2e2; color: #b91c1c;' : '#fef3c7; color: #b45309;'
+                            }">${ap.status}</span>
+                        </td>
+                        <td style="text-align: right;">
+                            <div style="display: flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap;">
+                                <button class="btn btn-sm btn-outline" title="View Patient Medical EHR History" onclick="app.openPatientHistoryModal('${ap.patientId}')" style="padding: 0.35rem 0.6rem;">
+                                    <i class="fa-solid fa-file-medical"></i> EHR
+                                </button>
+                                ${ap.status !== 'Completed' && ap.status !== 'Cancelled' ? `
+                                    <button class="btn btn-sm btn-primary" onclick="app.openPrescriptionModal('${ap.id}')" style="padding: 0.35rem 0.65rem;">
+                                        <i class="fa-solid fa-stethoscope"></i> Complete & Prescribe
+                                    </button>
+                                    <button class="btn btn-sm btn-outline" title="Reschedule Slot" onclick="app.openDoctorRescheduleModal('${ap.id}')" style="padding: 0.35rem 0.5rem; color: #2563eb; border-color: #93c5fd;">
+                                        <i class="fa-solid fa-calendar-days"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline" title="Cancel Slot" onclick="app.cancelAppointmentByDoctor('${ap.id}')" style="padding: 0.35rem 0.5rem; color: #dc2626; border-color: #fca5a5;">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-sm btn-secondary" onclick="app.viewPrescription('${ap.id}')" style="padding: 0.35rem 0.65rem;">
+                                        <i class="fa-solid fa-file-prescription"></i> View Rx
+                                    </button>
+                                `}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
         }
+
+        // Render Doctor Availability Settings Tab
+        this.renderDoctorAvailabilityForm(doc);
 
         // Render Received Patient Reports Inbox
         const docMsgContainer = document.getElementById('doctorReportInbox');
         if (docMsgContainer) {
-            const pendingReports = data.reportConsultations.filter(c => c.doctorId === this.session.id || c.doctorId === 'doc-101');
-            if (pendingReports.length === 0) {
-                docMsgContainer.innerHTML = `<p style="color: #64748b;">No patient reports received yet.</p>`;
+            if (myReports.length === 0) {
+                docMsgContainer.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; background: white; border-radius: 16px; border: 1px solid #e2e8f0;">
+                        <div style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 0.5rem;">📩</div>
+                        <h4 style="color: #475569;">No Patient Diagnostic Reports Received Yet</h4>
+                        <p style="color: #94a3b8; font-size: 0.85rem;">Uploaded patient reports (X-Rays, Scans) will appear here for online doctor feedback.</p>
+                    </div>
+                `;
             } else {
-                docMsgContainer.innerHTML = pendingReports.map(c => `
-                    <div style="background: white; border: 1px solid #e2e8f0; padding: 1.25rem; border-radius: 10px; margin-bottom: 1rem;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
-                            <strong>Patient: ${c.patientName}</strong>
-                            <span style="font-size: 0.8rem; color: #64748b;">${c.submittedAt}</span>
+                docMsgContainer.innerHTML = myReports.map(c => `
+                    <div style="background: white; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 16px; margin-bottom: 1.25rem; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <h4 style="margin: 0; color: #0f172a; font-weight: 700;">👤 ${c.patientName}</h4>
+                                    <span style="font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 12px; font-weight: 700; background: ${c.status === 'Replied' ? '#dcfce7; color: #15803d;' : '#fef3c7; color: #b45309;'}">${c.status}</span>
+                                </div>
+                                <div style="font-size: 0.82rem; color: #0d7a5f; font-weight: 600; margin-top: 0.25rem;">
+                                    📋 Report Subject: ${c.reportTitle}
+                                </div>
+                            </div>
+                            <span style="font-size: 0.8rem; color: #64748b; background: #f8fafc; padding: 0.25rem 0.6rem; border-radius: 8px;"><i class="fa-solid fa-clock"></i> ${c.submittedAt}</span>
                         </div>
-                        <p style="font-size: 0.85rem; color: #0d7a5f; font-weight: 600; margin-bottom: 0.4rem;">📄 Document: ${c.reportFileName}</p>
-                        <p style="font-size: 0.9rem; color: #334155; margin-bottom: 0.5rem;">"<strong>Patient Note:</strong> ${c.patientMessage}"</p>
+
+                        <!-- Attached Report Document -->
+                        <div style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 0.75rem 1rem; border-radius: 10px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <span style="font-size: 1.5rem;">📄</span>
+                                <div>
+                                    <strong style="font-size: 0.88rem; color: #1e293b;">${c.reportFileName}</strong>
+                                    <div style="font-size: 0.78rem; color: #64748b;">Uploaded PDF / Image Scan</div>
+                                </div>
+                            </div>
+                            <a href="#" onclick="alert('Viewing document: ${c.reportFileName}'); return false;" class="btn btn-sm btn-outline" style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">
+                                <i class="fa-solid fa-eye"></i> View Attachment
+                            </a>
+                        </div>
+
+                        <!-- Patient Note -->
+                        <div style="background: #fffbe6; border-left: 4px solid #f59e0b; padding: 0.85rem 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <div style="font-size: 0.78rem; font-weight: 700; color: #b45309; text-transform: uppercase; margin-bottom: 0.25rem;">Patient Question / Symptoms Note:</div>
+                            <p style="font-size: 0.9rem; color: #334155; margin: 0; line-height: 1.5;">"${c.patientMessage}"</p>
+                        </div>
+
+                        <!-- Doctor Message Feedback Box -->
                         ${c.doctorReply ? `
-                            <div style="background: #f1f5f9; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; border-left: 3px solid #0d7a5f;">
-                                <strong>Your Sent Advice:</strong> ${c.doctorReply}
+                            <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 1rem; border-radius: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                    <strong style="color: #15803d; font-size: 0.88rem;"><i class="fa-solid fa-reply"></i> Your Clinical Feedback & Recommendation:</strong>
+                                    <span style="font-size: 0.78rem; color: #15803d;">${c.repliedAt}</span>
+                                </div>
+                                <p style="margin: 0; font-size: 0.9rem; color: #1e293b; line-height: 1.5; font-weight: 500;">${c.doctorReply}</p>
                             </div>
                         ` : `
-                            <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
-                                <input type="text" id="replyInput-${c.id}" placeholder="Type medical advice for patient..." style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem;" />
-                                <button class="btn btn-sm btn-primary" onclick="app.replyToReport('${c.id}')">Send Feedback</button>
+                            <div style="background: #ffffff; border: 1.5px solid #2D8181; border-radius: 12px; padding: 1rem; margin-top: 0.5rem;">
+                                <label style="font-weight: 700; font-size: 0.85rem; color: #1b5353; display: block; margin-bottom: 0.5rem;">
+                                    💬 Doctor Consultation Message Feedback Box:
+                                </label>
+
+                                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem;">
+                                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; align-self: center;">Quick Replies:</span>
+                                    <button type="button" class="btn btn-sm btn-outline" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;" onclick="app.setQuickReply('${c.id}', 'Report reviewed. Continue current herbal oils & revisit in 2 weeks.')">Continue Treatment</button>
+                                    <button type="button" class="btn btn-sm btn-outline" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;" onclick="app.setQuickReply('${c.id}', 'Lab values show improvement. Drink warm coriander water daily.')">Good Progress</button>
+                                    <button type="button" class="btn btn-sm btn-outline" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;" onclick="app.setQuickReply('${c.id}', 'Please schedule an in-person session at Hela Osu Weda Gedara for physical examination.')">In-Person Visit Needed</button>
+                                </div>
+
+                                <textarea id="replyInput-${c.id}" rows="3" placeholder="Type your expert medical feedback, diagnosis assessment, and prescription guidance here..." style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; font-family: inherit; margin-bottom: 0.75rem; resize: vertical;"></textarea>
+
+                                <div style="text-align: right;">
+                                    <button class="btn btn-primary" onclick="app.replyToReport('${c.id}')" style="border-radius: 10px; font-weight: 700; padding: 0.5rem 1.25rem;">
+                                        <i class="fa-solid fa-paper-plane"></i> Send Feedback to Patient
+                                    </button>
+                                </div>
                             </div>
                         `}
                     </div>
@@ -1077,24 +1302,314 @@ class AppController {
         // Render Prescription History Table
         const tbodyRxHistory = document.getElementById('doctorPrescriptionHistoryTable');
         if (tbodyRxHistory) {
-            const completedAps = data.appointments.filter(a => (a.doctorId === this.session.id || a.doctorId === 'doc-101') && a.prescription);
+            const completedAps = myAppointments.filter(a => a.prescription);
             if (completedAps.length === 0) {
-                tbodyRxHistory.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b;">No prescription history recorded yet.</td></tr>`;
+                tbodyRxHistory.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">No clinical prescription records found. Complete consultations in your queue to generate e-Prescriptions.</td></tr>`;
             } else {
                 tbodyRxHistory.innerHTML = completedAps.map(ap => `
                     <tr>
-                        <td><strong>${ap.id}</strong></td>
-                        <td>${ap.patientName}</td>
+                        <td><strong style="color: #0f172a;">${ap.id}</strong></td>
+                        <td><strong>${ap.patientName}</strong></td>
                         <td>${ap.prescription.issuedDate || ap.date}</td>
-                        <td>${ap.prescription.diagnosis}</td>
-                        <td>
-                            <button class="btn btn-sm btn-secondary" onclick="app.viewPrescription('${ap.id}')">
-                                <i class="fa-solid fa-file-prescription"></i> View / Print Rx
+                        <td><span style="font-weight: 600; color: #0d7a5f;">${ap.prescription.diagnosis}</span></td>
+                        <td style="max-width: 250px;">
+                            <span style="font-size: 0.85rem; color: #475569;">
+                                ${ap.prescription.medicines ? ap.prescription.medicines.map(m => m.name).join(', ') : 'Herbal Treatment'}
+                            </span>
+                        </td>
+                        <td style="text-align: right;">
+                            <button class="btn btn-sm btn-secondary" onclick="app.viewPrescription('${ap.id}')" style="padding: 0.35rem 0.75rem;">
+                                <i class="fa-solid fa-file-prescription"></i> View / Print Rx PDF
                             </button>
                         </td>
                     </tr>
                 `).join('');
             }
+        }
+    }
+
+    setQuickReply(reportId, text) {
+        const input = document.getElementById(`replyInput-${reportId}`);
+        if (input) input.value = text;
+    }
+
+    renderDoctorAvailabilityForm(doc) {
+        if (!doc) return;
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const slots = ['08:30 AM - 11:30 AM', '09:00 AM - 12:00 PM', '02:00 PM - 05:00 PM', '03:00 PM - 06:00 PM', '05:00 PM - 08:00 PM'];
+        
+        const currentAvail = doc.availability || { workingDays: ['Monday', 'Wednesday', 'Friday'], timeSlots: ['09:00 AM - 12:00 PM'], leaveDays: [] };
+        if (!currentAvail.leaveDays) currentAvail.leaveDays = [];
+        if (!currentAvail.timeSlots) currentAvail.timeSlots = slots.slice(0, 2);
+
+        // Render Working Days Checkboxes
+        const daysContainer = document.getElementById('docWorkingDaysContainer');
+        if (daysContainer) {
+            daysContainer.innerHTML = days.map(day => {
+                const isChecked = currentAvail.workingDays.includes(day);
+                return `
+                    <label style="display: flex; align-items: center; gap: 0.5rem; background: ${isChecked ? '#e0f2fe' : '#f8fafc'}; border: 1.5px solid ${isChecked ? '#0284c7' : '#cbd5e1'}; padding: 0.5rem 0.9rem; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.88rem; color: ${isChecked ? '#0369a1' : '#475569'};">
+                        <input type="checkbox" name="docWorkingDay" value="${day}" ${isChecked ? 'checked' : ''} onchange="this.parentElement.style.background = this.checked ? '#e0f2fe' : '#f8fafc'; this.parentElement.style.borderColor = this.checked ? '#0284c7' : '#cbd5e1';" />
+                        ${day}
+                    </label>
+                `;
+            }).join('');
+        }
+
+        // Render Time Slots Checkboxes
+        const slotsContainer = document.getElementById('docTimeSlotsContainer');
+        if (slotsContainer) {
+            const allSlots = Array.from(new Set([...slots, ...currentAvail.timeSlots]));
+            slotsContainer.innerHTML = allSlots.map(slot => {
+                const isChecked = currentAvail.timeSlots.includes(slot);
+                return `
+                    <label style="display: flex; align-items: center; gap: 0.5rem; background: ${isChecked ? '#ecfdf5' : '#f8fafc'}; border: 1.5px solid ${isChecked ? '#10b981' : '#cbd5e1'}; padding: 0.6rem 0.9rem; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.85rem; color: ${isChecked ? '#047857' : '#475569'};">
+                        <input type="checkbox" name="docTimeSlot" value="${slot}" ${isChecked ? 'checked' : ''} onchange="this.parentElement.style.background = this.checked ? '#ecfdf5' : '#f8fafc'; this.parentElement.style.borderColor = this.checked ? '#10b981' : '#cbd5e1';" />
+                        🕒 ${slot}
+                    </label>
+                `;
+            }).join('');
+        }
+
+        // Render Leave Days Chips
+        const leaveContainer = document.getElementById('docLeaveDaysList');
+        if (leaveContainer) {
+            if (currentAvail.leaveDays.length === 0) {
+                leaveContainer.innerHTML = `<span style="font-size: 0.85rem; color: #94a3b8;">No blocked leave dates added yet.</span>`;
+            } else {
+                leaveContainer.innerHTML = currentAvail.leaveDays.map(ld => `
+                    <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                        📅 ${ld}
+                        <button type="button" style="background: transparent; border: none; color: #991b1b; font-weight: bold; cursor: pointer; font-size: 1rem;" onclick="app.removeDoctorLeaveDate('${ld}')">&times;</button>
+                    </div>
+                `).join('');
+            }
+        }
+    }
+
+    addCustomDoctorTimeSlot() {
+        const input = document.getElementById('customTimeSlotInput');
+        if (!input || !input.value.trim()) return;
+
+        const newSlot = input.value.trim();
+        const doc = this.currentDoctorObj || window.dbStore.get().doctors[0];
+        if (!doc.availability) doc.availability = { workingDays: [], timeSlots: [], leaveDays: [] };
+        if (!doc.availability.timeSlots) doc.availability.timeSlots = [];
+        
+        if (!doc.availability.timeSlots.includes(newSlot)) {
+            doc.availability.timeSlots.push(newSlot);
+        }
+
+        input.value = '';
+        this.renderDoctorAvailabilityForm(doc);
+        this.showToast(`Custom slot "${newSlot}" added!`, 'info');
+    }
+
+    addDoctorLeaveDate() {
+        const input = document.getElementById('addLeaveDateInput');
+        if (!input || !input.value) return;
+
+        const leaveDate = input.value;
+        const data = window.dbStore.get();
+        const doc = data.doctors.find(d => d.username === this.session.username || d.id === this.session.id) || data.doctors[0];
+        if (!doc.availability) doc.availability = { workingDays: [], timeSlots: [], leaveDays: [] };
+        if (!doc.availability.leaveDays) doc.availability.leaveDays = [];
+
+        if (!doc.availability.leaveDays.includes(leaveDate)) {
+            doc.availability.leaveDays.push(leaveDate);
+            window.dbStore.save(data);
+            this.showToast(`Leave date ${leaveDate} blocked on schedule!`, 'success');
+        }
+
+        input.value = '';
+        this.renderDoctorPortal();
+    }
+
+    removeDoctorLeaveDate(leaveDate) {
+        const data = window.dbStore.get();
+        const doc = data.doctors.find(d => d.username === this.session.username || d.id === this.session.id) || data.doctors[0];
+        if (doc && doc.availability && doc.availability.leaveDays) {
+            doc.availability.leaveDays = doc.availability.leaveDays.filter(d => d !== leaveDate);
+            window.dbStore.save(data);
+            this.showToast(`Leave date ${leaveDate} removed.`, 'info');
+            this.renderDoctorPortal();
+        }
+    }
+
+    saveDoctorAvailabilityForm() {
+        const data = window.dbStore.get();
+        const doc = data.doctors.find(d => d.username === this.session.username || d.id === this.session.id) || data.doctors[0];
+        if (!doc) return;
+
+        const workingDayInputs = document.querySelectorAll('input[name="docWorkingDay"]:checked');
+        const selectedDays = Array.from(workingDayInputs).map(i => i.value);
+
+        const timeSlotInputs = document.querySelectorAll('input[name="docTimeSlot"]:checked');
+        const selectedSlots = Array.from(timeSlotInputs).map(i => i.value);
+
+        if (!doc.availability) doc.availability = {};
+        doc.availability.workingDays = selectedDays;
+        doc.availability.timeSlots = selectedSlots;
+
+        window.dbStore.save(data);
+        this.showToast('Doctor consultation availability updated successfully!', 'success');
+        this.renderDoctorPortal();
+    }
+
+    openPatientHistoryModal(patientId) {
+        const data = window.dbStore.get();
+        const patient = data.patients.find(p => p.id === patientId || p.phone === patientId) || { name: 'Patient Record', phone: patientId, nic: 'N/A' };
+        const historyAps = data.appointments.filter(a => a.patientId === patientId || a.patientName === patient.name);
+        const historyReports = data.reportConsultations.filter(c => c.patientId === patientId || c.patientName === patient.name);
+
+        const container = document.getElementById('modalContent');
+        const overlay = document.getElementById('globalModalOverlay');
+
+        container.innerHTML = `
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-file-medical" style="color: var(--primary);"></i> Patient EHR Medical History</h3>
+                <button class="modal-close-btn" onclick="app.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 12px; margin-bottom: 1.25rem; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h4 style="margin: 0; color: #0f172a;">${patient.name}</h4>
+                        <p style="margin: 0.2rem 0 0 0; font-size: 0.85rem; color: #64748b;">Phone: ${patient.phone || 'N/A'} • NIC: ${patient.nic || 'N/A'}</p>
+                    </div>
+                    <span style="background: #e0f2fe; color: #0369a1; padding: 0.25rem 0.65rem; border-radius: 12px; font-weight: 700; font-size: 0.8rem;">
+                        ${historyAps.length} Total Visits
+                    </span>
+                </div>
+
+                <h4 style="font-size: 0.95rem; color: #1b5353; margin-bottom: 0.75rem;">📋 Consultation & Prescription History</h4>
+                ${historyAps.length === 0 ? `<p style="color: #64748b; font-size: 0.85rem;">No past consultations found.</p>` : `
+                    <div style="max-height: 250px; overflow-y: auto; margin-bottom: 1.25rem;">
+                        ${historyAps.map(ap => `
+                            <div style="background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0.85rem; margin-bottom: 0.75rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem;">
+                                    <strong>${ap.date} (${ap.timeSlot})</strong>
+                                    <span style="color: #0d7a5f; font-weight: 700;">${ap.status}</span>
+                                </div>
+                                <div style="font-size: 0.85rem; color: #475569;"><strong>Chief Complaint:</strong> ${ap.notes || 'N/A'}</div>
+                                ${ap.prescription ? `
+                                    <div style="background: #f0fdf4; padding: 0.5rem; border-radius: 6px; margin-top: 0.4rem; font-size: 0.82rem;">
+                                        <strong>Diagnosis:</strong> ${ap.prescription.diagnosis}<br>
+                                        <strong>Remedies:</strong> ${ap.prescription.medicines ? ap.prescription.medicines.map(m => m.name).join(', ') : 'N/A'}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+
+                <h4 style="font-size: 0.95rem; color: #1b5353; margin-bottom: 0.75rem;">📁 Uploaded Diagnostic Reports</h4>
+                ${historyReports.length === 0 ? `<p style="color: #64748b; font-size: 0.85rem;">No uploaded lab reports on file.</p>` : `
+                    <div>
+                        ${historyReports.map(r => `
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.65rem 0.85rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                                <span>📄 <strong>${r.reportTitle}</strong> (${r.reportFileName})</span>
+                                <span style="color: #64748b; font-size: 0.78rem;">${r.submittedAt}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            </div>
+        `;
+
+        overlay.classList.add('active');
+    }
+
+    openDoctorRescheduleModal(apId) {
+        const data = window.dbStore.get();
+        const ap = data.appointments.find(a => a.id === apId);
+        if (!ap) return;
+
+        const container = document.getElementById('modalContent');
+        const overlay = document.getElementById('globalModalOverlay');
+
+        container.innerHTML = `
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-calendar-days" style="color: #2563eb;"></i> Reschedule Patient Appointment</h3>
+                <button class="modal-close-btn" onclick="app.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1rem;">Rescheduling slot for <strong>${ap.patientName}</strong> (Token #${ap.tokenNo})</p>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600; font-size: 0.88rem;">Select New Date</label>
+                    <input type="date" id="docRescheduleDate" value="${ap.date}" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                </div>
+
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="font-weight: 600; font-size: 0.88rem;">Select Shift Time Slot</label>
+                    <select id="docRescheduleSlot" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;">
+                        <option value="08:30 AM - 11:30 AM" ${ap.timeSlot === '08:30 AM - 11:30 AM' ? 'selected' : ''}>08:30 AM - 11:30 AM</option>
+                        <option value="09:00 AM - 12:00 PM" ${ap.timeSlot === '09:00 AM - 12:00 PM' ? 'selected' : ''}>09:00 AM - 12:00 PM</option>
+                        <option value="02:00 PM - 05:00 PM" ${ap.timeSlot === '02:00 PM - 05:00 PM' ? 'selected' : ''}>02:00 PM - 05:00 PM</option>
+                        <option value="03:00 PM - 06:00 PM" ${ap.timeSlot === '03:00 PM - 06:00 PM' ? 'selected' : ''}>03:00 PM - 06:00 PM</option>
+                        <option value="05:00 PM - 08:00 PM" ${ap.timeSlot === '05:00 PM - 08:00 PM' ? 'selected' : ''}>05:00 PM - 08:00 PM</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%;" onclick="app.saveDoctorReschedule('${ap.id}')">
+                    Confirm Reschedule Slot
+                </button>
+            </div>
+        `;
+
+        overlay.classList.add('active');
+    }
+
+    saveDoctorReschedule(apId) {
+        const newDate = document.getElementById('docRescheduleDate').value;
+        const newSlot = document.getElementById('docRescheduleSlot').value;
+
+        const data = window.dbStore.get();
+        const ap = data.appointments.find(a => a.id === apId);
+        if (ap) {
+            ap.date = newDate;
+            ap.timeSlot = newSlot;
+            ap.notes = (ap.notes || '') + ` (Rescheduled by Doctor to ${newDate})`;
+
+            // Add notification for patient
+            if (!data.notifications) data.notifications = [];
+            data.notifications.unshift({
+                id: 'NOTIF-' + Date.now(),
+                userId: ap.patientId,
+                title: 'Appointment Rescheduled 📅',
+                message: `Dr. ${ap.doctorName} rescheduled your appointment #${ap.id} to ${newDate} (${newSlot}).`,
+                time: 'Just now',
+                unread: true
+            });
+
+            window.dbStore.save(data);
+            this.showToast('Appointment rescheduled and patient notified!', 'success');
+            this.closeModal();
+            this.renderDoctorPortal();
+        }
+    }
+
+    cancelAppointmentByDoctor(apId) {
+        const data = window.dbStore.get();
+        const ap = data.appointments.find(a => a.id === apId);
+        if (!ap) return;
+
+        if (confirm(`Are you sure you want to cancel appointment #${ap.id} for ${ap.patientName}?`)) {
+            ap.status = 'Cancelled';
+            
+            if (!data.notifications) data.notifications = [];
+            data.notifications.unshift({
+                id: 'NOTIF-' + Date.now(),
+                userId: ap.patientId,
+                title: 'Appointment Cancelled ❌',
+                message: `Your appointment #${ap.id} with ${ap.doctorName} on ${ap.date} was cancelled. Please contact reception.`,
+                time: 'Just now',
+                unread: true
+            });
+
+            window.dbStore.save(data);
+            this.showToast('Appointment cancelled.', 'info');
+            this.renderDoctorPortal();
         }
     }
 

@@ -148,14 +148,27 @@
 
         <!-- 0.1 REGISTER PAGE VIEW -->
         <section id="view-register" class="page-view">
-            <div class="container" style="max-width: 550px; margin-top: 2rem;">
-                <div class="glass-card" style="box-shadow: var(--shadow-lg); padding: 2.25rem;">
+            <div class="container" style="max-width: 600px; margin-top: 2rem;">
+                <div class="glass-card" style="box-shadow: var(--shadow-lg); padding: 2.25rem; border-radius: 20px;">
+                    
+                    <!-- Registration Account Type Tabs -->
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: #f1f5f9; padding: 0.35rem; border-radius: 12px;">
+                        <button type="button" id="regTypePatientBtn" class="btn btn-sm" style="flex: 1; border-radius: 8px; font-weight: 700; background: #1b5353; color: white;" onclick="app.setRegisterRole('patient')">
+                            👤 Register Patient
+                        </button>
+                        <button type="button" id="regTypeDoctorBtn" class="btn btn-sm" style="flex: 1; border-radius: 8px; font-weight: 700; background: transparent; color: #475569;" onclick="app.setRegisterRole('doctor')">
+                            🩺 Register Doctor (Needs Approval)
+                        </button>
+                    </div>
+
                     <div style="text-align: center; margin-bottom: 1.5rem;">
-                        <h2>Register Patient Account</h2>
-                        <p style="color: #64748b; font-size: 0.9rem;">Join Hela Osu Weda Gedara Channeling Network</p>
+                        <h2 id="regFormTitle">Register Patient Account</h2>
+                        <p id="regFormSubtitle" style="color: #64748b; font-size: 0.9rem;">Join Hela Osu Weda Gedara Channeling Network</p>
                     </div>
 
                     <form id="mainRegisterForm">
+                        <input type="hidden" id="regRoleInput" value="patient" />
+
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
                             <div>
                                 <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Username</label>
@@ -163,14 +176,14 @@
                             </div>
                             <div>
                                 <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Full Name</label>
-                                <input type="text" id="regName" placeholder="Saman Kumara" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                                <input type="text" id="regName" placeholder="Dr. / Mr. / Ms." required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
                             </div>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
                             <div>
                                 <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Email</label>
-                                <input type="email" id="regEmail" placeholder="saman@gmail.com" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                                <input type="email" id="regEmail" placeholder="user@gmail.com" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
                             </div>
                             <div>
                                 <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Phone Number</label>
@@ -178,19 +191,53 @@
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
-                            <div>
-                                <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">NIC Number</label>
-                                <input type="text" id="regNic" placeholder="199238402910" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                        <!-- PATIENT SPECIFIC FIELDS -->
+                        <div id="patientRegFields">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+                                <div>
+                                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">NIC Number</label>
+                                    <input type="text" id="regNic" placeholder="199238402910" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                                </div>
+                                <div>
+                                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Age & Gender</label>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <input type="number" id="regAge" placeholder="30" style="width: 45%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                                        <select id="regGender" style="width: 55%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;">
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Age & Gender</label>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <input type="number" id="regAge" placeholder="30" style="width: 45%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
-                                    <select id="regGender" style="width: 55%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;">
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
+                        </div>
+
+                        <!-- DOCTOR SPECIFIC FIELDS (Hidden by default) -->
+                        <div id="doctorRegFields" style="display: none;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+                                <div>
+                                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Medical Reg No</label>
+                                    <input type="text" id="regDocRegNo" placeholder="SL-AYU-5012" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                                </div>
+                                <div>
+                                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Specialization</label>
+                                    <select id="regDocSpec" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;">
+                                        <option value="Ayurveda & Traditional Healing">Ayurveda & Traditional Healing</option>
+                                        <option value="Ayurvedic Wellness & Vitality">Ayurvedic Wellness & Vitality</option>
+                                        <option value="Pediatrics & Child Health">Pediatrics & Child Health</option>
+                                        <option value="Spine & Joint Rehabilitation">Spine & Joint Rehabilitation</option>
+                                        <option value="Dermatology & Skin Care">Dermatology & Skin Care</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
+                                <div>
+                                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Hospital / Branch</label>
+                                    <input type="text" id="regDocHospital" value="Hela Osu Weda Gedara - Galle Branch" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                                </div>
+                                <div>
+                                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Channeling Fee (LKR)</label>
+                                    <input type="number" id="regDocFee" value="2800" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
                                 </div>
                             </div>
                         </div>
@@ -200,7 +247,7 @@
                             <input type="password" id="regPassword" placeholder="••••••••" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
                         </div>
 
-                        <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.05rem;">
+                        <button type="submit" id="regSubmitBtn" class="btn btn-primary" style="width: 100%; font-size: 1.05rem;">
                             <i class="fa-solid fa-user-check"></i> Register Patient Account
                         </button>
                     </form>
@@ -236,6 +283,7 @@
 
     <!-- JS MODULE LOADERS -->
     <script src="js/data.js?v=2"></script>
+    <script src="js/api.js?v=5"></script>
     <script src="js/i18n.js?v=2"></script>
     <script src="js/pdf-generator.js?v=2"></script>
     <script src="js/charts.js?v=2"></script>
@@ -255,32 +303,27 @@
                 const password = document.getElementById("loginPassword").value.trim();
 
                 try {
-                    const response = await fetch("http://localhost:8080/api/v1/users/login", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ username, password })
-                    });
+                    const res = await HelaApi.users.login({ username, password });
+                    const payload = res ? (res.body || res.data) : null;
 
-                    const res = await response.json();
-                    console.log("LOGIN RESPONSE:", res);
-
-                    if (response.ok && res.data && res.data.token) {
-                        const role = (res.data.role || "ADMIN").toLowerCase();
+                    if (payload && (payload.token || payload.role)) {
+                        const role = (payload.role || "ADMIN").toLowerCase();
+                        const token = payload.token || "mock-jwt-token";
 
                         const sessionObj = {
-                            id: res.data.userId || 1,
-                            username: res.data.username,
-                            name: res.data.username.toUpperCase(),
+                            id: payload.userId || payload.id || 1,
+                            username: payload.username || username,
+                            name: (payload.username || username).toUpperCase(),
                             role: role,
-                            token: res.data.token
+                            token: token
                         };
 
                         localStorage.setItem("hela_osu_session", JSON.stringify(sessionObj));
-                        localStorage.setItem("jwt_token", res.data.token);
-                        localStorage.setItem("user_role", res.data.role);
+                        localStorage.setItem("jwt_token", token);
+                        localStorage.setItem("user_role", payload.role || role);
 
                         if (role === "admin") {
-                            window.location.replace("admin.html");
+                            window.location.replace("adminDashboard.html");
                         } else if (role === "doctor") {
                             window.location.replace("doctor.html");
                         } else {
@@ -288,10 +331,10 @@
                         }
                     } else {
                         if (window.app) window.app.performLocalLogin(username, password);
-                        else alert(res.message || "Invalid Credentials");
+                        else alert((res && res.message) ? res.message : "Invalid Credentials");
                     }
                 } catch (err) {
-                    console.warn("Backend error, trying local authentication:", err);
+                    console.warn("Backend connection offline, attempting local authentication:", err);
                     if (window.app) window.app.performLocalLogin(username, password);
                     else alert("Could not reach server.");
                 }
@@ -300,29 +343,105 @@
 
         const regForm = document.getElementById("mainRegisterForm");
         if (regForm) {
-            regForm.addEventListener("submit", (e) => {
+            regForm.addEventListener("submit", async (e) => {
                 e.preventDefault();
+                const role = document.getElementById("regRoleInput").value;
                 const username = document.getElementById("regUsername").value.trim();
                 const name = document.getElementById("regName").value.trim();
                 const email = document.getElementById("regEmail").value.trim();
                 const phone = document.getElementById("regPhone").value.trim();
-                const nic = document.getElementById("regNic").value.trim();
-                const age = document.getElementById("regAge").value;
-                const gender = document.getElementById("regGender").value;
                 const password = document.getElementById("regPassword").value;
 
                 const data = window.dbStore.get();
-                if (!data.patients) data.patients = [];
-                const newPatient = { id: 'pat-' + Date.now(), username, name, email, phone, nic, age, gender, password };
-                data.patients.push(newPatient);
-                window.dbStore.save(data);
 
-                if (window.app) {
-                    window.app.showToast('Registration successful! Please sign in.', 'success');
-                    window.app.setLoginRole('patient');
-                    window.app.switchView('view-login');
+                if (role === 'doctor') {
+                    if (!data.doctors) data.doctors = [];
+                    const docRegNo = document.getElementById("regDocRegNo").value.trim() || ('SL-AYU-' + Math.floor(1000 + Math.random() * 9000));
+                    const docSpec = document.getElementById("regDocSpec").value;
+                    const docHospital = document.getElementById("regDocHospital").value.trim() || 'Hela Osu Weda Gedara - Galle Branch';
+                    const docFee = parseFloat(document.getElementById("regDocFee").value) || 2800;
+
+                    const newDoc = {
+                        id: 'doc-' + Date.now(),
+                        username,
+                        password,
+                        email,
+                        name,
+                        title: 'Consultant Ayurvedic Specialist',
+                        specialization: docSpec,
+                        regNo: docRegNo,
+                        hospital: docHospital,
+                        fee: docFee,
+                        hospitalFee: 500,
+                        experience: '5 Years',
+                        rating: 5.0,
+                        reviewsCount: 0,
+                        image: '',
+                        status: 'pending',
+                        bio: `Practitioner registered at ${docHospital}.`,
+                        availability: {
+                            workingDays: ['Monday', 'Wednesday', 'Friday'],
+                            timeSlots: ['09:00 AM - 12:00 PM', '03:00 PM - 06:00 PM'],
+                            leaveDays: []
+                        }
+                    };
+                    data.doctors.push(newDoc);
+                    window.dbStore.save(data);
+
+                    // Try backend Spring Boot registration
+                    try {
+                        await HelaApi.doctors.register({
+                            name: name,
+                            slmcNo: docRegNo,
+                            specializationId: 1,
+                            phone: phone,
+                            roomNo: 1,
+                            fee: docFee,
+                            isActive: false
+                        }, username, password, email);
+                    } catch (e) {
+                        console.warn("Backend doc registration offline:", e);
+                    }
+
+                    if (window.app) {
+                        window.app.showToast('Doctor registration submitted! Pending Admin Approval.', 'success');
+                        window.app.setLoginRole('doctor');
+                        window.app.switchView('view-login');
+                    } else {
+                        alert('Doctor registration submitted! Pending Admin Approval.');
+                    }
                 } else {
-                    alert('Registration successful! Please sign in.');
+                    if (!data.patients) data.patients = [];
+                    const nic = document.getElementById("regNic").value.trim() || ("NIC" + Math.floor(10000 + Math.random() * 90000));
+                    const age = document.getElementById("regAge").value || "30";
+                    const gender = document.getElementById("regGender").value || "Not Specified";
+
+                    const newPatient = { id: 'pat-' + Date.now(), username, name, email, phone, nic, age, gender, password, status: 'active', registeredDate: new Date().toISOString().split('T')[0] };
+                    data.patients.push(newPatient);
+                    window.dbStore.save(data);
+
+                    // Try backend Spring Boot patient registration
+                    try {
+                        await HelaApi.patients.register({
+                            name: name,
+                            nic: nic,
+                            phone: phone,
+                            email: email,
+                            gender: gender,
+                            dob: "1995-01-01",
+                            address: "Sri Lanka"
+                        }, username, password);
+                    } catch (e) {
+                        console.warn("Backend patient registration offline:", e);
+                    }
+
+                    if (window.app) {
+                        window.app.showToast('Registration successful! Please sign in.', 'success');
+                        window.app.setLoginRole('patient');
+                        window.app.switchView('view-login');
+                    } else {
+                        alert('Registration successful! Please sign in.');
+                    }
                 }
             });
         }

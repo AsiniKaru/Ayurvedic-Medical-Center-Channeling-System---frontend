@@ -536,7 +536,7 @@ class AdminController {
         overlay.classList.add('active');
     }
 
-    saveNewSpecializationFromModal() {
+    async saveNewSpecializationFromModal() {
         const name = document.getElementById('newSpecName').value;
         const code = document.getElementById('newSpecCode').value;
         const category = document.getElementById('newSpecCategory').value;
@@ -556,6 +556,18 @@ class AdminController {
 
         data.specializations.push(newSpec);
         window.dbStore.save(data);
+
+        try {
+            if (window.HelaApi) {
+                await HelaApi.specializations.save({
+                    name: name,
+                    description: desc || 'Ayurvedic specialist treatments'
+                });
+            }
+        } catch (e) {
+            console.warn("Backend save specialization offline:", e);
+        }
+
         if (window.app) {
             window.app.showToast(`Specialization ${newSpec.name} added!`, 'success');
             window.app.closeModal();
