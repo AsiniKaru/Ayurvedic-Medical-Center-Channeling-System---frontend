@@ -20,6 +20,11 @@ class AdminController {
         this.selectedScheduleDoctorId = null;
         this.currentScheduleWeekOffset = 0; // 0 = current week
         this.isScheduleEditEnabled = false; // Must click "Enable Editing" to edit grid
+
+        window.addEventListener('databaseSynced', () => {
+            // console.log("AdminController: Re-rendering Admin dashboard with database records...");
+            this.renderAdminDashboard();
+        });
     }
 
     switchTab(tabName) {
@@ -71,7 +76,14 @@ class AdminController {
         }
     }
 
-    renderAdminDashboard() {
+    async renderAdminDashboard() {
+        if (window.HelaApi) {
+            try {
+                await HelaApi.syncDatabase();
+            } catch (e) {
+                console.warn("HelaApi sync warning:", e);
+            }
+        }
         const data = window.dbStore.get();
         this.populateSpecializationDropdowns(data);
         this.renderKPIs(data);
@@ -97,8 +109,9 @@ class AdminController {
         const commissionPercent = (data.adminConfig && data.adminConfig.platformCommissionPercent) ? data.adminConfig.platformCommissionPercent : 10;
         const platformEarned = Math.round(totalRev * (commissionPercent / 100));
 
-        const pendingDocs = (data.doctors || []).filter(d => d.status === 'pending').length;
-        const activeDocs = (data.doctors || []).filter(d => d.status === 'approved').length;
+        const docsList = (data.doctors || []).map(d => ({ ...d, status: d.status || 'approved' }));
+        const pendingDocs = docsList.filter(d => d.status === 'pending').length;
+        const activeDocs = docsList.filter(d => d.status === 'approved' || d.status === 'active').length;
 
         const kpiRevenue = document.getElementById('kpiTotalRevenue');
         const kpiAppointments = document.getElementById('kpiTotalAppointments');
@@ -116,12 +129,18 @@ class AdminController {
     }
 
     // =========================================================================
-    // DOCTOR MANAGEMENT FUNCTIONS (Cleaned Actions per Image 1 & 4 feedback)
+    // DOCTOR MANAGEMENT FUNCTIONS
     // =========================================================================
 
-    filterDoctorsTable(searchVal = null) {
+    filterDoctorsTable(val) {
+        if (val !== undefined) this.doctorSearch = val.toLowerCase().trim();
+        this.filterDoctorTable();
+    }
+
+    filterDoctorTable() {
         const data = window.dbStore.get();
-        if (searchVal !== null) this.doctorSearch = searchVal.toLowerCase();
+        const searchEl = document.getElementById('doctorSearchInput');
+        if (searchEl) this.doctorSearch = searchEl.value.toLowerCase().trim();
         
         const specEl = document.getElementById('doctorSpecFilter');
         const statusEl = document.getElementById('doctorStatusFilter');
@@ -132,25 +151,35 @@ class AdminController {
     }
 
     renderDoctorTable(data) {
+        if (!data) data = window.dbStore.get();
         const tbody = document.getElementById('adminDoctorsTableBody');
         if (!tbody) return;
 
-        let docs = data.doctors || [];
+        let docs = (data.doctors || []).map(d => ({
+            ...d,
+            status: d.status || 'approved'
+        }));
 
         if (this.doctorSearch) {
             docs = docs.filter(d => 
-                d.name.toLowerCase().includes(this.doctorSearch) ||
-                (d.regNo && d.regNo.toLowerCase().includes(this.doctorSearch)) ||
+                (d.name && d.name.toLowerCase().includes(this.doctorSearch)) ||
                 (d.hospital && d.hospital.toLowerCase().includes(this.doctorSearch))
             );
         }
 
         if (this.doctorSpecFilter) {
-            docs = docs.filter(d => d.specialization === this.doctorSpecFilter);
+            docs = docs.filter(d => d.specialization && d.specialization.toLowerCase().includes(this.doctorSpecFilter.toLowerCase()));
         }
 
         if (this.doctorStatusFilter) {
-            docs = docs.filter(d => d.status === this.doctorStatusFilter);
+            docs = docs.filter(d => {
+                const s = (d.status || '').toLowerCase();
+                const f = this.doctorStatusFilter.toLowerCase();
+                if (f === 'approved' || f === 'active') {
+                    return s === 'approved' || s === 'active' || s === 'approved / active';
+                }
+                return s === f;
+            });
         }
 
         if (docs.length === 0) {
@@ -158,18 +187,15 @@ class AdminController {
                 <tr>
                     <td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">
                         <i class="fa-solid fa-user-doctor" style="font-size: 2rem; margin-bottom: 0.5rem; color: #cbd5e1;"></i>
-                        <p>No Wedamahatayas found matching the selected filter criteria.</p>
+                        <p>No Wedamahatayas found. Register a doctor using the "Add New Hela Osu Doctor" button.</p>
                     </td>
                 </tr>
             `;
             return;
         }
 
-        // Image 1 & 4 feedback: Removed Edit and Dustbin/Delete buttons from Actions column.
-        // Kept Edit Pen icon next to Doctor Name in column 1 for editing details.
-        // Kept Schedule button in Actions column for timetable grid.
         tbody.innerHTML = docs.map(doc => {
-            const statusLabel = doc.status === 'approved' 
+            const statusLabel = (doc.status === 'approved' || doc.status === 'active')
                 ? `<span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.78rem; font-weight: bold; background: #dcfce7; color: #15803d;">● Active</span>`
                 : doc.status === 'inactive'
                 ? `<span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.78rem; font-weight: bold; background: #fee2e2; color: #b91c1c;">● Inactive</span>`
@@ -209,13 +235,22 @@ class AdminController {
         }).join('');
     }
 
+    renderDoctorsTable(data) {
+        this.renderDoctorTable(data);
+    }
+
     openEditDoctorModal(docId) {
         const data = window.dbStore.get();
         const doc = data.doctors.find(d => d.id === docId);
         if (!doc) return;
 
         const specs = data.specializations || [];
-        const specOptions = specs.map(s => `<option value="${s.name}" ${doc.specialization === s.name ? 'selected' : ''}>${s.name}</option>`).join('');
+        // Value MUST be the specialization_id: the backend `doctor` table stores
+        // specialization_id (FK), not the specialization name text.
+        const currentSpecId = doc.specializationId != null
+            ? doc.specializationId
+            : (specs.find(s => s.name === doc.specialization) || {}).id;
+        const specOptions = specs.map(s => `<option value="${s.id}" ${Number(currentSpecId) === Number(s.id) ? 'selected' : ''}>${s.name}</option>`).join('');
 
         const container = document.getElementById('modalContent');
         const overlay = document.getElementById('globalModalOverlay');
@@ -257,17 +292,12 @@ class AdminController {
                             <input type="number" id="editDocFee" value="${doc.fee}" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 10px;" />
                         </div>
                         <div>
-                            <label style="font-size: 0.85rem; font-weight: 700; color: #334155; display: block; margin-bottom: 0.3rem;">Medical Reg No</label>
-                            <input type="text" id="editDocRegNo" value="${doc.regNo || ''}" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 10px;" />
+                            <label style="font-size: 0.85rem; font-weight: 700; color: #334155; display: block; margin-bottom: 0.3rem;">Hospital / Branch Location</label>
+                            <input type="text" id="editDocHospital" value="${doc.hospital}" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 10px;" />
                         </div>
                     </div>
 
-                    <div style="margin-bottom: 1.25rem;">
-                        <label style="font-size: 0.85rem; font-weight: 700; color: #334155; display: block; margin-bottom: 0.3rem;">Hospital / Branch Location</label>
-                        <input type="text" id="editDocHospital" value="${doc.hospital}" required style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 10px;" />
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; border-radius: 12px; font-weight: 700;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; border-radius: 12px; font-weight: 700; margin-top: 0.5rem;">
                         <i class="fa-solid fa-floppy-disk"></i> Save Doctor Details
                     </button>
                 </form>
@@ -277,19 +307,43 @@ class AdminController {
         overlay.classList.add('active');
     }
 
-    updateDoctorDetailsFromModal(docId) {
+    async updateDoctorDetailsFromModal(docId) {
         const data = window.dbStore.get();
         const doc = data.doctors.find(d => d.id === docId);
         if (!doc) return;
 
+        const selectedSpecId = parseInt(document.getElementById('editDocSpec').value, 10) || null;
+        const selectedSpec = (data.specializations || []).find(s => Number(s.id) === selectedSpecId);
+
         doc.name = document.getElementById('editDocName').value;
-        doc.specialization = document.getElementById('editDocSpec').value;
+        doc.specializationId = selectedSpecId;
+        doc.specialization = selectedSpec ? selectedSpec.name : doc.specialization;
         doc.status = document.getElementById('editDocStatus').value;
         doc.fee = parseFloat(document.getElementById('editDocFee').value);
-        doc.regNo = document.getElementById('editDocRegNo').value;
         doc.hospital = document.getElementById('editDocHospital').value;
 
         window.dbStore.save(data);
+
+        // Update Doctor on Backend API
+        try {
+            if (window.HelaApi) {
+                const docNumericId = doc.docId || parseInt(docId.toString().replace(/[^0-9]/g, '')) || 1;
+                const nameParts = doc.name.split(' ');
+                await HelaApi.doctors.update({
+                    docId: docNumericId,
+                    firstName: nameParts[0] || doc.name,
+                    lastName: nameParts.slice(1).join(' ') || 'Specialist',
+                    phoneNumber: doc.phone || '0771234567',
+                    consultationFee: doc.fee,
+                    bio: doc.bio || `Consultant Practitioner at ${doc.hospital}`,
+                    specializationId: selectedSpecId
+                });
+                await HelaApi.syncDatabase();
+            }
+        } catch (e) {
+            console.warn("Backend update doctor offline:", e);
+        }
+
         if (window.app) {
             window.app.showToast(`Doctor profile ${doc.name} updated!`, 'success');
             window.app.closeModal();
@@ -311,7 +365,10 @@ class AdminController {
     openAddDoctorModal() {
         const data = window.dbStore.get();
         const specs = data.specializations || [];
-        const specOptions = specs.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+        // Value MUST be specialization_id - the backend `doctor` table links via that FK.
+        const specOptions = specs.length > 0
+            ? specs.map(s => `<option value="${s.id}">${s.name}</option>`).join('')
+            : '<option value="">No specializations available - add one first</option>';
 
         const container = document.getElementById('modalContent');
         const overlay = document.getElementById('globalModalOverlay');
@@ -323,15 +380,9 @@ class AdminController {
             </div>
             <div class="modal-body">
                 <form onsubmit="event.preventDefault(); adminController.saveNewDoctorFromModal();">
-                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
-                        <div>
-                            <label style="font-size: 0.85rem; font-weight: 600;">Full Name & Title</label>
-                            <input type="text" id="newDocName" placeholder="Dr. Deshabandu Wickramasinghe" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
-                        </div>
-                        <div>
-                            <label style="font-size: 0.85rem; font-weight: 600;">Medical Reg No</label>
-                            <input type="text" id="newDocReg" placeholder="SLMC-4029" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
-                        </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <label style="font-size: 0.85rem; font-weight: 600;">Full Name & Title</label>
+                        <input type="text" id="newDocName" placeholder="Dr. Deshabandu Wickramasinghe" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
@@ -348,8 +399,8 @@ class AdminController {
                     </div>
 
                     <div style="margin-bottom: 1.25rem;">
-                        <label style="font-size: 0.85rem; font-weight: 600;">Hela Osu Branch / Hospital</label>
-                        <input type="text" id="newDocHospital" placeholder="Hela Osu Weda Gedara - Galle Branch" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
+                        <label style="font-size: 0.85rem; font-weight: 600;">Hela Osu Branch / Hospital Location</label>
+                        <input type="text" id="newDocHospital" value="Hela Osu Weda Gedara - Galle Branch" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
                     </div>
 
                     <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.7rem;">
@@ -362,22 +413,35 @@ class AdminController {
         overlay.classList.add('active');
     }
 
-    saveNewDoctorFromModal() {
-        const name = document.getElementById('newDocName').value;
-        const regNo = document.getElementById('newDocReg').value;
-        const spec = document.getElementById('newDocSpec').value;
-        const fee = parseFloat(document.getElementById('newDocFee').value);
-        const hospital = document.getElementById('newDocHospital').value;
+    async saveNewDoctorFromModal() {
+        const name = document.getElementById('newDocName').value.trim();
+        const specId = parseInt(document.getElementById('newDocSpec').value, 10) || null;
+        const fee = parseFloat(document.getElementById('newDocFee').value) || 2800;
+        const hospital = document.getElementById('newDocHospital').value.trim();
 
         const data = window.dbStore.get();
+        if (!data.doctors) data.doctors = [];
+
+        if (!specId) {
+            if (window.app) window.app.showToast('Please select a specialization.', 'error');
+            return;
+        }
+        const specObj = (data.specializations || []).find(s => Number(s.id) === specId);
+        const specName = specObj ? specObj.name : 'General Practice';
+
+        const username = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const email = `${username}@helaosu.lk`;
+        const password = 'password';
+
         const newDoc = {
             id: 'doc-' + Math.floor(100 + Math.random() * 900),
-            username: name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-            password: 'password',
+            username: username,
+            password: password,
+            email: email,
             name: name,
             title: 'Ayurvedic Consultant',
-            specialization: spec,
-            regNo: regNo,
+            specialization: specName,
+            specializationId: specId,
             hospital: hospital,
             fee: fee,
             hospitalFee: 500,
@@ -385,7 +449,7 @@ class AdminController {
             rating: 5.0,
             reviewsCount: 1,
             status: 'approved',
-            bio: 'Qualified traditional medical practitioner registered with Hela Osu Weda Gedara.',
+            bio: `Qualified practitioner registered at ${hospital}.`,
             availability: {
                 workingDays: ['Monday', 'Wednesday', 'Friday'],
                 timeSlots: ['09:00 AM - 12:00 PM'],
@@ -395,270 +459,92 @@ class AdminController {
 
         data.doctors.push(newDoc);
         window.dbStore.save(data);
+
+        // Register Doctor & User in Spring Boot Backend Database
+        try {
+            if (window.HelaApi) {
+                const nameParts = name.split(' ');
+                const firstName = nameParts[0] || name;
+                const lastName = nameParts.slice(1).join(' ') || 'Specialist';
+
+                await HelaApi.doctors.register({
+                    firstName: firstName,
+                    lastName: lastName,
+                    phoneNumber: '0771234567',
+                    consultationFee: fee,
+                    bio: `Qualified practitioner registered at ${hospital}`,
+                    specializationId: specId
+                }, username, password, email);
+
+                await HelaApi.syncDatabase();
+            }
+        } catch (e) {
+            console.warn("Backend doctor registration offline:", e);
+        }
+
         if (window.app) {
-            window.app.showToast(`Doctor ${newDoc.name} successfully registered!`, 'success');
+            window.app.showToast(`Doctor ${newDoc.name} successfully registered and approved!`, 'success');
             window.app.closeModal();
         }
         this.renderAdminDashboard();
     }
 
     // =========================================================================
-    // SPECIALIZATION MANAGEMENT MODULE (New Feature)
+    // SPECIALIZATION MANAGEMENT MODULE (Delegated to SpecializationController)
     // =========================================================================
 
     populateSpecializationDropdowns(data) {
-        const filterSelect = document.getElementById('doctorSpecFilter');
-        if (!filterSelect) return;
-
-        const currentVal = filterSelect.value;
-        const specs = data.specializations || [];
-
-        filterSelect.innerHTML = '<option value="">All Specializations</option>' + specs.map(s => `
-            <option value="${s.name}" ${currentVal === s.name ? 'selected' : ''}>${s.name}</option>
-        `).join('');
+        if (window.specializationController) {
+            window.specializationController.populateSpecializationDropdowns(data);
+        }
     }
 
     filterSpecializationsTable(searchVal = null) {
-        const data = window.dbStore.get();
-        if (searchVal !== null) this.specializationSearch = searchVal.toLowerCase();
-        this.renderSpecializationsTable(data);
+        if (window.specializationController) {
+            window.specializationController.filterSpecializationsTable(searchVal);
+        }
     }
 
     renderSpecializationsTable(data) {
-        const tbody = document.getElementById('adminSpecializationsTableBody');
-        if (!tbody) return;
-
-        let specs = data.specializations || [];
-
-        if (this.specializationSearch) {
-            specs = specs.filter(s => 
-                s.name.toLowerCase().includes(this.specializationSearch) ||
-                (s.category && s.category.toLowerCase().includes(this.specializationSearch)) ||
-                (s.code && s.code.toLowerCase().includes(this.specializationSearch))
-            );
+        if (window.specializationController) {
+            window.specializationController.renderSpecializationsTable(data);
         }
-
-        if (specs.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">
-                        <i class="fa-solid fa-tags" style="font-size: 2rem; margin-bottom: 0.5rem; color: #cbd5e1;"></i>
-                        <p>No specializations found matching your search.</p>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        const doctors = data.doctors || [];
-
-        tbody.innerHTML = specs.map(spec => {
-            const assignedDocCount = doctors.filter(d => d.specialization === spec.name).length;
-            const statusLabel = spec.status === 'active' 
-                ? `<span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.78rem; font-weight: bold; background: #dcfce7; color: #15803d;">Active</span>`
-                : `<span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.78rem; font-weight: bold; background: #fee2e2; color: #b91c1c;">Inactive</span>`;
-
-            return `
-                <tr>
-                    <td>
-                        <strong>${spec.name}</strong><br>
-                        <code style="font-size: 0.75rem; background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 4px; color: #0284c7;">${spec.code || 'SPEC-00'}</code>
-                    </td>
-                    <td><span class="role-badge role-patient">${spec.category || 'General'}</span></td>
-                    <td style="max-width: 280px; font-size: 0.85rem; color: #475569;">${spec.description || 'N/A'}</td>
-                    <td><strong style="color: #2D8181;">${assignedDocCount} Doctors</strong></td>
-                    <td>${statusLabel}</td>
-                    <td>
-                        <div style="display: flex; gap: 0.35rem; align-items: center;">
-                            <button class="btn btn-sm btn-outline" onclick="adminController.openEditSpecializationModal('${spec.id}')" title="Edit Specialization">
-                                <i class="fa-solid fa-pen"></i> Edit
-                            </button>
-                            <button class="btn btn-sm ${spec.status === 'active' ? 'btn-outline' : 'btn-primary'}" onclick="adminController.toggleSpecializationStatus('${spec.id}')">
-                                ${spec.status === 'active' ? 'Deactivate' : 'Activate'}
-                            </button>
-                            <button class="btn btn-sm" style="background: #fee2e2; color: #dc2626; border: none;" onclick="adminController.removeSpecialization('${spec.id}')" title="Delete Specialization">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join('');
     }
 
     openAddSpecializationModal() {
-        const container = document.getElementById('modalContent');
-        const overlay = document.getElementById('globalModalOverlay');
-
-        container.innerHTML = `
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-tags" style="color: #2D8181;"></i> Add New Specialization</h3>
-                <button class="modal-close-btn" onclick="app.closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form onsubmit="event.preventDefault(); adminController.saveNewSpecializationFromModal();">
-                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
-                        <div>
-                            <label style="font-size: 0.85rem; font-weight: 600;">Specialization Name</label>
-                            <input type="text" id="newSpecName" placeholder="Neurology & Brain Health" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
-                        </div>
-                        <div>
-                            <label style="font-size: 0.85rem; font-weight: 600;">Code / Ref ID</label>
-                            <input type="text" id="newSpecCode" placeholder="NEURO-06" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 0.75rem;">
-                        <label style="font-size: 0.85rem; font-weight: 600;">Department Category</label>
-                        <select id="newSpecCategory" style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;">
-                            <option value="Traditional Medicine">Traditional Medicine</option>
-                            <option value="Wellness & Prevention">Wellness & Prevention</option>
-                            <option value="Pediatrics">Pediatrics</option>
-                            <option value="Orthopedics & Spine">Orthopedics & Spine</option>
-                            <option value="Dermatology">Dermatology</option>
-                            <option value="Neurology">Neurology</option>
-                            <option value="General Clinical">General Clinical</option>
-                        </select>
-                    </div>
-
-                    <div style="margin-bottom: 1.25rem;">
-                        <label style="font-size: 0.85rem; font-weight: 600;">Clinical Scope Description</label>
-                        <textarea id="newSpecDesc" rows="3" placeholder="Brief description of clinical treatments and scope..." style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;"></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.7rem;">
-                        <i class="fa-solid fa-plus"></i> Save New Specialization
-                    </button>
-                </form>
-            </div>
-        `;
-
-        overlay.classList.add('active');
+        if (window.specializationController) {
+            window.specializationController.openAddSpecializationModal();
+        }
     }
 
-    async saveNewSpecializationFromModal() {
-        const name = document.getElementById('newSpecName').value;
-        const code = document.getElementById('newSpecCode').value;
-        const category = document.getElementById('newSpecCategory').value;
-        const desc = document.getElementById('newSpecDesc').value;
-
-        const data = window.dbStore.get();
-        if (!data.specializations) data.specializations = [];
-
-        const newSpec = {
-            id: 'spec-' + Date.now(),
-            name: name,
-            code: code,
-            category: category,
-            description: desc || 'Ayurvedic specialist treatments and consultations.',
-            status: 'active'
-        };
-
-        data.specializations.push(newSpec);
-        window.dbStore.save(data);
-
-        try {
-            if (window.HelaApi) {
-                await HelaApi.specializations.save({
-                    name: name,
-                    description: desc || 'Ayurvedic specialist treatments'
-                });
-            }
-        } catch (e) {
-            console.warn("Backend save specialization offline:", e);
+    saveNewSpecializationFromModal() {
+        if (window.specializationController) {
+            window.specializationController.saveNewSpecializationFromModal();
         }
-
-        if (window.app) {
-            window.app.showToast(`Specialization ${newSpec.name} added!`, 'success');
-            window.app.closeModal();
-        }
-        this.renderSpecializationsTable(data);
-        this.populateSpecializationDropdowns(data);
     }
 
     openEditSpecializationModal(specId) {
-        const data = window.dbStore.get();
-        const spec = (data.specializations || []).find(s => s.id === specId);
-        if (!spec) return;
-
-        const container = document.getElementById('modalContent');
-        const overlay = document.getElementById('globalModalOverlay');
-
-        container.innerHTML = `
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-pen" style="color: #2D8181;"></i> Edit Specialization</h3>
-                <button class="modal-close-btn" onclick="app.closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form onsubmit="event.preventDefault(); adminController.updateSpecializationFromModal('${spec.id}');">
-                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
-                        <div>
-                            <label style="font-size: 0.85rem; font-weight: 600;">Specialization Name</label>
-                            <input type="text" id="editSpecName" value="${spec.name}" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
-                        </div>
-                        <div>
-                            <label style="font-size: 0.85rem; font-weight: 600;">Code / Ref ID</label>
-                            <input type="text" id="editSpecCode" value="${spec.code || ''}" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 0.75rem;">
-                        <label style="font-size: 0.85rem; font-weight: 600;">Department Category</label>
-                        <input type="text" id="editSpecCategory" value="${spec.category || ''}" required style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
-                    </div>
-
-                    <div style="margin-bottom: 1.25rem;">
-                        <label style="font-size: 0.85rem; font-weight: 600;">Description</label>
-                        <textarea id="editSpecDesc" rows="3" style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 8px;">${spec.description || ''}</textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.7rem;">
-                        <i class="fa-solid fa-floppy-disk"></i> Update Specialization Details
-                    </button>
-                </form>
-            </div>
-        `;
-
-        overlay.classList.add('active');
+        if (window.specializationController) {
+            window.specializationController.openEditSpecializationModal(specId);
+        }
     }
 
     updateSpecializationFromModal(specId) {
-        const data = window.dbStore.get();
-        const spec = (data.specializations || []).find(s => s.id === specId);
-        if (!spec) return;
-
-        spec.name = document.getElementById('editSpecName').value;
-        spec.code = document.getElementById('editSpecCode').value;
-        spec.category = document.getElementById('editSpecCategory').value;
-        spec.description = document.getElementById('editSpecDesc').value;
-
-        window.dbStore.save(data);
-        if (window.app) {
-            window.app.showToast(`Specialization ${spec.name} updated!`, 'success');
-            window.app.closeModal();
+        if (window.specializationController) {
+            window.specializationController.updateSpecializationFromModal(specId);
         }
-        this.renderSpecializationsTable(data);
-        this.populateSpecializationDropdowns(data);
     }
 
     toggleSpecializationStatus(specId) {
-        const data = window.dbStore.get();
-        const spec = (data.specializations || []).find(s => s.id === specId);
-        if (spec) {
-            spec.status = spec.status === 'active' ? 'inactive' : 'active';
-            window.dbStore.save(data);
-            if (window.app) window.app.showToast(`Specialization status changed to ${spec.status}.`, 'info');
-            this.renderSpecializationsTable(data);
+        if (window.specializationController) {
+            window.specializationController.toggleSpecializationStatus(specId);
         }
     }
 
     removeSpecialization(specId) {
-        if (!confirm('Are you sure you want to remove this specialization?')) return;
-        const data = window.dbStore.get();
-        data.specializations = (data.specializations || []).filter(s => s.id !== specId);
-        window.dbStore.save(data);
-        if (window.app) window.app.showToast('Specialization deleted.', 'warning');
-        this.renderSpecializationsTable(data);
+        if (window.specializationController) {
+            window.specializationController.removeSpecialization(specId);
+        }
     }
 
     // =========================================================================
@@ -865,64 +751,75 @@ class AdminController {
     }
 
     renderPatientTable(data) {
+        if (!data) data = window.dbStore.get();
         const tbody = document.getElementById('adminPatientsTableBody');
         if (!tbody) return;
 
-        let pats = data.patients || [];
+        let pats = (data.patients || []).map(p => ({
+            ...p,
+            status: p.status || 'active'
+        }));
 
         if (this.patientSearch) {
             pats = pats.filter(p => 
-                p.name.toLowerCase().includes(this.patientSearch) ||
-                (p.nic && p.nic.toLowerCase().includes(this.patientSearch)) ||
-                (p.email && p.email.toLowerCase().includes(this.patientSearch))
+                (p.name && p.name.toLowerCase().includes(this.patientSearch)) ||
+                (p.email && p.email.toLowerCase().includes(this.patientSearch)) ||
+                (p.nic && p.nic.toLowerCase().includes(this.patientSearch))
             );
         }
 
         if (this.patientStatusFilter) {
-            pats = pats.filter(p => (p.status || 'active') === this.patientStatusFilter);
+            pats = pats.filter(p => (p.status || '').toLowerCase() === this.patientStatusFilter.toLowerCase());
         }
 
         if (pats.length === 0) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="7" style="text-align: center; padding: 2rem; color: #64748b;">
-                        <i class="fa-solid fa-users-slash" style="font-size: 2rem; margin-bottom: 0.5rem; color: #cbd5e1;"></i>
-                        <p>No patient records found.</p>
+                        <i class="fa-solid fa-user-xmark" style="font-size: 2rem; margin-bottom: 0.5rem; color: #cbd5e1;"></i>
+                        <p>No patient records found matching your filters.</p>
                     </td>
                 </tr>
             `;
             return;
         }
 
-        tbody.innerHTML = pats.map(pat => `
-            <tr>
-                <td><strong>${pat.name}</strong></td>
-                <td>
-                    ${pat.email}<br>
-                    <span style="font-size: 0.8rem; color: #64748b;"><i class="fa-solid fa-phone"></i> ${pat.phone}</span>
-                </td>
-                <td><code style="background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 4px;">${pat.nic || 'N/A'}</code></td>
-                <td>${pat.age || 30} Yrs (${pat.gender || 'N/A'})</td>
-                <td>${pat.registeredDate || '2026-01-15'}</td>
-                <td>
-                    ${(pat.status || 'active') === 'active' 
-                        ? `<span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.78rem; font-weight: bold; background: #dcfce7; color: #15803d;">Active</span>`
-                        : `<span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.78rem; font-weight: bold; background: #fee2e2; color: #b91c1c;">Suspended</span>`
-                    }
-                </td>
-                <td>
-                    <div style="display: flex; gap: 0.4rem;">
-                        <button class="btn btn-sm ${(pat.status || 'active') === 'active' ? 'btn-outline' : 'btn-primary'}" 
-                                onclick="adminController.togglePatientStatus('${pat.id}')">
-                            ${(pat.status || 'active') === 'active' ? 'Suspend Account' : 'Reactivate'}
-                        </button>
-                        <button class="btn btn-sm btn-outline" onclick="adminController.viewPatientHistoryModal('${pat.id}')">
-                            History
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = pats.map(p => {
+            const statusLabel = p.status === 'suspended'
+                ? `<span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.78rem; font-weight: bold; background: #fee2e2; color: #b91c1c;">● Suspended</span>`
+                : `<span style="padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.78rem; font-weight: bold; background: #dcfce7; color: #15803d;">● Active</span>`;
+
+            return `
+                <tr>
+                    <td>
+                        <strong>${p.name}</strong><br>
+                        <span style="font-size: 0.78rem; color: #64748b;">Username: ${p.username || 'patient'}</span>
+                    </td>
+                    <td>
+                        <span>${p.email || 'N/A'}</span><br>
+                        <span style="font-size: 0.78rem; color: #64748b;">📞 ${p.phone || 'N/A'}</span>
+                    </td>
+                    <td><code>${p.nic || 'N/A'}</code></td>
+                    <td>${p.age || '30'} Yrs / ${p.gender || 'Not Specified'}</td>
+                    <td>${p.registeredDate || new Date().toISOString().split('T')[0]}</td>
+                    <td>${statusLabel}</td>
+                    <td>
+                        <div style="display: flex; gap: 0.35rem;">
+                            <button class="btn btn-sm btn-outline" onclick="adminController.viewPatientHistoryModal('${p.id}')" title="View Patient Booking History">
+                                <i class="fa-solid fa-history"></i> History
+                            </button>
+                            <button class="btn btn-sm ${p.status === 'suspended' ? 'btn-primary' : 'btn-outline'}" onclick="adminController.togglePatientStatus('${p.id}')" style="${p.status === 'suspended' ? '' : 'color: #dc2626; border-color: #fca5a5;'}">
+                                ${p.status === 'suspended' ? 'Activate' : 'Suspend'}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    renderPatientsTable(data) {
+        this.renderPatientTable(data);
     }
 
     togglePatientStatus(patId) {
@@ -1063,6 +960,10 @@ class AdminController {
                 </td>
             </tr>
         `).join('');
+    }
+
+    renderAppointmentTable(data) {
+        this.renderAppointmentsTable(data);
     }
 
     viewReceiptModal(bookingId) {

@@ -5,16 +5,14 @@
 
 const BASE_URL = "http://localhost:8080/api/v1";
 
-async function apiRequest(endpoint, method = "GET", body = null, requireAuth = true) {
+async function apiRequest(endpoint, method = "GET", body = null, requireAuth = false) {
     const headers = {
         "Content-Type": "application/json"
     };
 
-    if (requireAuth) {
-        const token = localStorage.getItem("jwt_token");
-        if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-        }
+    const token = localStorage.getItem("jwt_token");
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
     }
 
     const options = { method, headers };
@@ -25,14 +23,13 @@ async function apiRequest(endpoint, method = "GET", body = null, requireAuth = t
     try {
         const response = await fetch(`${BASE_URL}${endpoint}`, options);
 
-        if (response.status === 401 || response.status === 403) {
-            console.warn("API Auth Warning: 401/403 on", endpoint);
+        if (!response.ok) {
+            return null;
         }
 
         const data = await response.json();
         return data;
     } catch (err) {
-        console.warn("Connection warning to backend server (localhost:8080):", err);
         return null;
     }
 }
@@ -130,7 +127,137 @@ const HelaApi = {
         update: (dto) => apiRequest("/rooms/update", "PUT", dto, true),
         delete: (roomId) => apiRequest(`/rooms/delete/${roomId}`, "DELETE", null, true),
         getAll: () => apiRequest("/rooms/getAll", "GET", null, false)
+    },
+
+    // Global Database Synchronizer
+    syncDatabase: async function() {
+        if (!window.dbStore) return;
+        try {
+            const data = window.dbStore.get();
+            let updated = false;
+
+            // 1. Fetch Specializations from Database
+            const specRes = await this.specializations.getAll();
+            const specList = specRes ? (specRes.body || specRes.data || specRes) : null;
+            if (Array.isArray(specList) && specList.length > 0) {
+                data.specializations = specList.map(s => ({
+                    id: s.specializationId || s.id,
+                    name: s.name,
+                    code: 'SPEC-' + (s.specializationId || 1),
+                    category: 'Ayurvedic Clinical',
+                    description: s.description || 'Traditional medical specialization',
+                    status: 'active'
+                }));
+                updated = true;
+            }
+
+            // 2. Fetch Doctors from Database
+            const docRes = await this.doctors.getAll();
+            const docList = docRes ? (docRes.body || docRes.data || docRes) : null;
+            if (Array.isArray(docList) && docList.length > 0) {
+                const apiDocs = docList.map(d => {
+                    let rawName = (d.firstName || d.lastName)
+                        ? `${d.firstName || ''} ${d.lastName || ''}`.trim()
+                        : (d.doctorName && !d.doctorName.includes('null') ? d.doctorName : 'Specialist');
+                    if (!rawName.toLowerCase().startsWith('dr.')) {
+                        rawName = `Dr. ${rawName}`;
+                    }
+
+                    const docIdStr = String(d.docId || d.id || Math.floor(Math.random() * 1000));
+                    const docKey = docIdStr.startsWith('doc-') ? docIdStr : `doc-${docIdStr}`;
+
+                    return {
+                        id: docKey,
+                        docId: d.docId || d.id,
+                        name: rawName,
+                        username: `doc_${d.docId || 1}`,
+                        title: 'Consultant Ayurvedic Specialist',
+                        specialization: d.specializationName || 'Ayurveda & Traditional Healing',
+                        hospital: 'Hela Osu Weda Gedara - Galle Branch',
+                        fee: d.consultationFee || 2800,
+                        hospitalFee: 500,
+                        phone: d.phoneNumber || '0771234567',
+                        experience: '10 Years',
+                        rating: 5.0,
+                        reviewsCount: 12,
+                        image: '',
+                        status: 'approved',
+                        bio: d.bio || 'Qualified traditional medical practitioner.',
+                        availability: {
+                            workingDays: ['Monday', 'Wednesday', 'Friday'],
+                            timeSlots: ['09:00 AM - 12:00 PM', '03:00 PM - 06:00 PM'],
+                            leaveDays: []
+                        }
+                    };
+                });
+
+                // Merge API doctors with local store doctors without losing local ones
+                const docMap = new Map();
+                (data.doctors || []).forEach(localDoc => docMap.set(localDoc.id, localDoc));
+                apiDocs.forEach(apiDoc => docMap.set(apiDoc.id, apiDoc));
+
+                data.doctors = Array.from(docMap.values());
+                updated = true;
+            }
+
+            // 3. Fetch Patients from Database
+            const patRes = await this.patients.getAll();
+            const patList = patRes ? (patRes.body || patRes.data || patRes) : null;
+            if (Array.isArray(patList) && patList.length > 0) {
+                data.patients = patList.map(p => ({
+                    id: p.patientId || p.id,
+                    name: p.patientName || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Patient Record',
+                    username: `patient_${p.patientId || 1}`,
+                    email: p.email || 'patient@helaosu.lk',
+                    phone: p.phoneNumber || '0771234567',
+                    nic: '199012345678',
+                    gender: p.gender || 'Not Specified',
+                    status: 'active',
+                    registeredDate: p.dob || new Date().toISOString().split('T')[0]
+                }));
+                updated = true;
+            }
+
+            // 4. Fetch Appointments from Database
+            const appRes = await this.appointments.getAll();
+            const appList = appRes ? (appRes.body || appRes.data || appRes) : null;
+            if (Array.isArray(appList) && appList.length > 0) {
+                data.appointments = appList.map(a => ({
+                    id: 'AP-' + (a.appointmentId || a.id),
+                    patientId: a.patientId,
+                    patientName: a.patientName || 'Patient',
+                    doctorName: a.doctorName || 'Doctor',
+                    specialization: 'Ayurveda & Traditional Healing',
+                    hospital: 'Hela Osu Weda Gedara - Galle Branch',
+                    date: a.createdAt ? a.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+                    timeSlot: '09:00 AM - 12:00 PM',
+                    tokenNo: a.appointmentNumber || 1,
+                    doctorFee: 2800,
+                    hospitalFee: 500,
+                    totalFee: 3300,
+                    paymentStatus: 'Paid Online',
+                    paymentMethod: 'Credit Card',
+                    status: a.status === 'COMPLETED' ? 'Completed' : a.status === 'CANCELLED' ? 'Cancelled' : 'Upcoming',
+                    notes: 'Channeling booking via database system',
+                    createdAt: a.createdAt ? a.createdAt.split('T')[0] : new Date().toISOString().split('T')[0]
+                }));
+                updated = true;
+            }
+
+            if (updated) {
+                window.dbStore.save(data);
+                console.log("HelaApi: Successfully synchronized database data into local store!");
+            }
+            window.dispatchEvent(new CustomEvent('databaseSynced'));
+        } catch (err) {
+            console.warn("HelaApi Database sync warning:", err);
+            window.dispatchEvent(new CustomEvent('databaseSynced'));
+        }
     }
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    HelaApi.syncDatabase();
+});
 
 window.HelaApi = HelaApi;

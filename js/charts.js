@@ -8,11 +8,36 @@ class AnalyticsManager {
         this.specChart = null;
         this.doctorAppChart = null;
         this.revenueChart = null;
+        this.loadingChartScript = false;
     }
 
     initCharts() {
         if (typeof Chart === 'undefined') {
-            console.warn('Chart.js CDN not loaded yet.');
+            if (!this.loadingChartScript) {
+                this.loadingChartScript = true;
+                const existingScript = document.querySelector('script[src*="chart.js"]');
+                if (!existingScript) {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+                    script.onload = () => {
+                        this.loadingChartScript = false;
+                        this.initCharts();
+                    };
+                    script.onerror = () => {
+                        this.loadingChartScript = false;
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    existingScript.addEventListener('load', () => {
+                        this.loadingChartScript = false;
+                        this.initCharts();
+                    });
+                    setTimeout(() => {
+                        this.loadingChartScript = false;
+                        if (typeof Chart !== 'undefined') this.initCharts();
+                    }, 500);
+                }
+            }
             return;
         }
 

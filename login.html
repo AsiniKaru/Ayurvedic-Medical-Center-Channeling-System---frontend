@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE htmIDl>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -116,8 +116,8 @@
                                 </form>
 
                                 <!-- Register Link -->
-                                <div style="text-align: center; margin-top: 1.25rem;">
-                                    <p style="font-size: 0.85rem; color: #64748b; margin: 0;">Don't have a patient account? <a href="#" onclick="app.switchView('view-register')" style="color: #2D8181; font-weight: 700; text-decoration: none;">Register here</a></p>
+                                <div id="loginRegisterContainer" style="text-align: center; margin-top: 1.25rem;">
+                                    <p style="font-size: 0.85rem; color: #64748b; margin: 0;"><span id="loginRegisterPromptText">Don't have a patient account? </span><a href="#" id="loginRegisterLink" onclick="app.openRegisterForCurrentRole(event)" style="color: #2D8181; font-weight: 700; text-decoration: none;">Register here</a></p>
                                 </div>
 
                                 <!-- Role Switcher Buttons -->
@@ -152,7 +152,7 @@
                 <div class="glass-card" style="box-shadow: var(--shadow-lg); padding: 2.25rem; border-radius: 20px;">
                     
                     <!-- Registration Account Type Tabs -->
-                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: #f1f5f9; padding: 0.35rem; border-radius: 12px;">
+                    <div id="regRoleTabsContainer" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: #f1f5f9; padding: 0.35rem; border-radius: 12px;">
                         <button type="button" id="regTypePatientBtn" class="btn btn-sm" style="flex: 1; border-radius: 8px; font-weight: 700; background: #1b5353; color: white;" onclick="app.setRegisterRole('patient')">
                             👤 Register Patient
                         </button>
@@ -215,10 +215,6 @@
                         <div id="doctorRegFields" style="display: none;">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
                                 <div>
-                                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Medical Reg No</label>
-                                    <input type="text" id="regDocRegNo" placeholder="SL-AYU-5012" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
-                                </div>
-                                <div>
                                     <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Specialization</label>
                                     <select id="regDocSpec" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;">
                                         <option value="Ayurveda & Traditional Healing">Ayurveda & Traditional Healing</option>
@@ -228,17 +224,15 @@
                                         <option value="Dermatology & Skin Care">Dermatology & Skin Care</option>
                                     </select>
                                 </div>
-                            </div>
-
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-bottom: 0.85rem;">
-                                <div>
-                                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Hospital / Branch</label>
-                                    <input type="text" id="regDocHospital" value="Hela Osu Weda Gedara - Galle Branch" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
-                                </div>
                                 <div>
                                     <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Channeling Fee (LKR)</label>
                                     <input type="number" id="regDocFee" value="2800" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
                                 </div>
+                            </div>
+
+                            <div style="margin-bottom: 0.85rem;">
+                                <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Hospital / Branch Location</label>
+                                <input type="text" id="regDocHospital" value="Hela Osu Weda Gedara - Galle Branch" style="width: 100%; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px;" />
                             </div>
                         </div>
 
@@ -253,7 +247,7 @@
                     </form>
 
                     <div style="text-align: center; margin-top: 1.25rem;">
-                        <p style="font-size: 0.85rem; color: #64748b;">Already registered? <a href="#" onclick="app.setLoginRole('patient'); app.switchView('view-login');">Sign in here</a></p>
+                        <p style="font-size: 0.85rem; color: #64748b;">Already registered? <a href="#" id="regSignInBackLink" onclick="app.setLoginRole('patient'); app.switchView('view-login');">Sign in here</a></p>
                     </div>
                 </div>
             </div>
@@ -282,14 +276,17 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- JS MODULE LOADERS -->
-    <script src="js/data.js?v=2"></script>
-    <script src="js/api.js?v=5"></script>
-    <script src="js/i18n.js?v=2"></script>
-    <script src="js/pdf-generator.js?v=2"></script>
-    <script src="js/charts.js?v=2"></script>
-    <script src="js/chatbot.js?v=2"></script>
-    <script src="js/admin.js?v=2"></script>
-    <script src="js/app.js?v=4"></script>
+    <script src="js/data.js?v=4"></script>
+    <script src="js/api.js?v=6"></script>
+    <script src="js/i18n.js?v=4"></script>
+    <script src="js/pdf-generator.js?v=4"></script>
+    <script src="js/charts.js?v=4"></script>
+    <script src="js/chatbot.js?v=4"></script>
+    <script src="js/patient.js?v=1"></script>
+    <script src="js/doctor.js?v=1"></script>
+    <script src="js/specialization.js?v=1"></script>
+    <script src="js/admin.js?v=4"></script>
+    <script src="js/app.js?v=9"></script>
 
     <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -303,28 +300,38 @@
                 const password = document.getElementById("loginPassword").value.trim();
 
                 try {
+                    const activeTabRole = document.getElementById("loginRoleInput").value.toLowerCase();
                     const res = await HelaApi.users.login({ username, password });
                     const payload = res ? (res.body || res.data) : null;
 
                     if (payload && (payload.token || payload.role)) {
-                        const role = (payload.role || "ADMIN").toLowerCase();
+                        const actualRole = (payload.role || "ADMIN").toLowerCase();
+
+                        // Enforce strict role matching
+                        if (actualRole !== activeTabRole) {
+                            const errorMsg = `Access Denied: Account '${username}' is registered as a ${actualRole.toUpperCase()}. Please switch to the ${actualRole.toUpperCase()} Login tab.`;
+                            if (window.app) window.app.showToast(errorMsg, 'error');
+                            else alert(errorMsg);
+                            return;
+                        }
+
                         const token = payload.token || "mock-jwt-token";
 
                         const sessionObj = {
                             id: payload.userId || payload.id || 1,
                             username: payload.username || username,
                             name: (payload.username || username).toUpperCase(),
-                            role: role,
+                            role: actualRole,
                             token: token
                         };
 
                         localStorage.setItem("hela_osu_session", JSON.stringify(sessionObj));
                         localStorage.setItem("jwt_token", token);
-                        localStorage.setItem("user_role", payload.role || role);
+                        localStorage.setItem("user_role", payload.role || actualRole);
 
-                        if (role === "admin") {
+                        if (actualRole === "admin") {
                             window.location.replace("adminDashboard.html");
-                        } else if (role === "doctor") {
+                        } else if (actualRole === "doctor") {
                             window.location.replace("doctor.html");
                         } else {
                             window.location.replace("patient.html");
@@ -354,12 +361,36 @@
 
                 const data = window.dbStore.get();
 
+                // Prevent multiple registrations under the same user/username/email
+                const lowerUser = username.toLowerCase();
+                const lowerEmail = email.toLowerCase();
+                const nicVal = document.getElementById("regNic") ? document.getElementById("regNic").value.trim().toLowerCase() : "";
+
+                const isDupDoc = (data.doctors || []).some(d => (d.username && d.username.toLowerCase() === lowerUser) || (d.email && d.email.toLowerCase() === lowerEmail));
+                const isDupPat = (data.patients || []).some(p => (p.username && p.username.toLowerCase() === lowerUser) || (p.email && p.email.toLowerCase() === lowerEmail) || (nicVal && p.nic && p.nic.toLowerCase() === nicVal));
+
+                if (isDupDoc || isDupPat) {
+                    const errorMsg = `Registration Failed: Account with username '${username}' or email '${email}' already exists! Multiple registrations under the same user are not allowed.`;
+                    if (window.app) window.app.showToast(errorMsg, 'error');
+                    else alert(errorMsg);
+                    return;
+                }
+
                 if (role === 'doctor') {
                     if (!data.doctors) data.doctors = [];
-                    const docRegNo = document.getElementById("regDocRegNo").value.trim() || ('SL-AYU-' + Math.floor(1000 + Math.random() * 9000));
-                    const docSpec = document.getElementById("regDocSpec").value;
+                    // regDocSpec's value IS the specialization_id (see specialization.js), since
+                    // that's what the backend `doctor` table's specialization_id FK needs.
+                    const docSpecId = parseInt(document.getElementById("regDocSpec").value, 10) || null;
+                    const docSpecObj = (data.specializations || []).find(s => Number(s.id) === docSpecId);
+                    const docSpecName = docSpecObj ? docSpecObj.name : 'General Practice';
                     const docHospital = document.getElementById("regDocHospital").value.trim() || 'Hela Osu Weda Gedara - Galle Branch';
                     const docFee = parseFloat(document.getElementById("regDocFee").value) || 2800;
+
+                    if (!docSpecId) {
+                        const errorMsg = 'Please select a specialization before registering.';
+                        if (window.app) window.app.showToast(errorMsg, 'error'); else alert(errorMsg);
+                        return;
+                    }
 
                     const newDoc = {
                         id: 'doc-' + Date.now(),
@@ -368,8 +399,8 @@
                         email,
                         name,
                         title: 'Consultant Ayurvedic Specialist',
-                        specialization: docSpec,
-                        regNo: docRegNo,
+                        specialization: docSpecName,
+                        specializationId: docSpecId,
                         hospital: docHospital,
                         fee: docFee,
                         hospitalFee: 500,
@@ -388,17 +419,21 @@
                     data.doctors.push(newDoc);
                     window.dbStore.save(data);
 
-                    // Try backend Spring Boot registration
+                    // Try backend Spring Boot registration (matching Doctor Entity table structure)
                     try {
+                        const nameParts = name.split(' ');
+                        const firstName = nameParts[0] || name;
+                        const lastName = nameParts.slice(1).join(' ') || 'Specialist';
+
                         await HelaApi.doctors.register({
-                            name: name,
-                            slmcNo: docRegNo,
-                            specializationId: 1,
-                            phone: phone,
-                            roomNo: 1,
-                            fee: docFee,
-                            isActive: false
+                            firstName: firstName,
+                            lastName: lastName,
+                            phoneNumber: phone || '0771234567',
+                            consultationFee: docFee,
+                            bio: `Practitioner registered at ${docHospital}`,
+                            specializationId: docSpecId
                         }, username, password, email);
+                        await HelaApi.syncDatabase();
                     } catch (e) {
                         console.warn("Backend doc registration offline:", e);
                     }
@@ -412,9 +447,9 @@
                     }
                 } else {
                     if (!data.patients) data.patients = [];
-                    const nic = document.getElementById("regNic").value.trim() || ("NIC" + Math.floor(10000 + Math.random() * 90000));
-                    const age = document.getElementById("regAge").value || "30";
-                    const gender = document.getElementById("regGender").value || "Not Specified";
+                    const nic = document.getElementById("regNic") ? document.getElementById("regNic").value.trim() || ("NIC" + Math.floor(10000 + Math.random() * 90000)) : ("NIC" + Math.floor(10000 + Math.random() * 90000));
+                    const age = document.getElementById("regAge") ? document.getElementById("regAge").value || "30" : "30";
+                    const gender = document.getElementById("regGender") ? document.getElementById("regGender").value || "Not Specified" : "Not Specified";
 
                     const newPatient = { id: 'pat-' + Date.now(), username, name, email, phone, nic, age, gender, password, status: 'active', registeredDate: new Date().toISOString().split('T')[0] };
                     data.patients.push(newPatient);

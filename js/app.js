@@ -70,6 +70,15 @@ class AppController {
                 this.renderPatientBookings();
             }
         });
+
+        window.addEventListener('databaseSynced', () => {
+            // console.log("AppController: Re-rendering views with database data...");
+            this.renderDoctorsGrid();
+            this.renderDashboardStats();
+            if (this.session && this.session.role === 'patient') {
+                this.renderPatientBookings();
+            }
+        });
     }
 
     getCurrentPageName() {
@@ -240,20 +249,31 @@ class AppController {
         const iconContainer = document.getElementById('loginRoleIcon');
         const usernameInput = document.getElementById('loginUsername');
 
+        const registerContainer = document.getElementById('loginRegisterContainer');
+        const registerPrompt = document.getElementById('loginRegisterPromptText');
+        const registerLink = document.getElementById('loginRegisterLink');
+
         if (roleInput) roleInput.value = role;
 
         if (role === 'doctor') {
             if (titleText) titleText.textContent = 'Wedamahataya Doctor Login';
             if (iconContainer) iconContainer.innerHTML = '🩺';
             if (usernameInput) usernameInput.placeholder = 'Enter doctor username (e.g. dr_wickramasinghe)';
+            if (registerContainer) registerContainer.style.display = 'block';
+            if (registerPrompt) registerPrompt.textContent = "Don't have a doctor account? ";
+            if (registerLink) registerLink.textContent = "Register here";
         } else if (role === 'admin') {
             if (titleText) titleText.textContent = 'Admin Control Login';
             if (iconContainer) iconContainer.innerHTML = '⚙️';
             if (usernameInput) usernameInput.placeholder = 'Enter admin username (e.g. admin)';
+            if (registerContainer) registerContainer.style.display = 'none';
         } else {
             if (titleText) titleText.textContent = 'Patient Login';
             if (iconContainer) iconContainer.innerHTML = '👤';
             if (usernameInput) usernameInput.placeholder = 'Enter username (e.g. saman_k)';
+            if (registerContainer) registerContainer.style.display = 'block';
+            if (registerPrompt) registerPrompt.textContent = "Don't have a patient account? ";
+            if (registerLink) registerLink.textContent = "Register here";
         }
 
         const roleSwitchButtons = document.getElementById('loginRoleSwitchButtons');
@@ -272,6 +292,14 @@ class AppController {
                 }
             });
         }
+    }
+
+    openRegisterForCurrentRole(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        const role = this.currentLoginRole || 'patient';
+        if (role === 'admin') return;
+        this.setRegisterRole(role, true);
+        this.switchView('view-register');
     }
 
     switchView(viewId) {
@@ -303,26 +331,33 @@ class AppController {
 
     performLocalLogin(username, password) {
         const data = window.dbStore.get();
-        let role = this.currentLoginRole || 'patient';
+        const activeTabRole = this.currentLoginRole || 'patient';
+        let actualRole = null;
         let userObj = null;
 
-        if (username === 'admin' || role === 'admin') {
-            role = 'admin';
+        const lowerUser = (username || '').toLowerCase();
+        const doc = (data.doctors || []).find(d => (d.username && d.username.toLowerCase() === lowerUser) || (d.email && d.email.toLowerCase() === lowerUser));
+        const pat = (data.patients || []).find(p => (p.username && p.username.toLowerCase() === lowerUser) || (p.email && p.email.toLowerCase() === lowerUser));
+
+        if (lowerUser === 'admin') {
+            actualRole = 'admin';
             userObj = { id: 'admin-1', username: username || 'admin', name: 'System Administrator', role: 'admin' };
+        } else if (doc) {
+            actualRole = 'doctor';
+            userObj = { id: doc.id, username: doc.username, name: doc.name, role: 'doctor' };
+        } else if (pat) {
+            actualRole = 'patient';
+            userObj = { id: pat.id, username: pat.username, name: pat.name, role: 'patient' };
         } else {
-            const doc = data.doctors ? data.doctors.find(d => d.username === username || d.email === username) : null;
-            if (doc) {
-                role = 'doctor';
-                userObj = { id: doc.id, username: doc.username, name: doc.name, role: 'doctor' };
-            } else {
-                const pat = (data.patients || []).find(p => p.username === username || p.email === username);
-                if (pat) {
-                    role = 'patient';
-                    userObj = { id: pat.id, username: pat.username, name: pat.name, role: 'patient' };
-                } else {
-                    userObj = { id: 'user-' + Date.now(), username: username, name: username, role: role };
-                }
-            }
+            actualRole = activeTabRole;
+            userObj = { id: 'user-' + Date.now(), username: username, name: username, role: activeTabRole };
+        }
+
+        // STRICT ROLE ENFORCEMENT: Only allow patient -> patient login, doctor -> doctor login, admin -> admin login!
+        if (actualRole !== activeTabRole) {
+            const errorMsg = `Access Denied: Account '${username}' is registered as a ${actualRole.toUpperCase()}. Please switch to the ${actualRole.toUpperCase()} Login tab!`;
+            this.showToast(errorMsg, 'error');
+            return;
         }
 
         this.session = userObj;
@@ -330,8 +365,8 @@ class AppController {
         this.showToast(`Welcome back, ${userObj.name}!`, 'success');
 
         setTimeout(() => {
-            if (role === 'admin') window.location.href = 'adminDashboard.html';
-            else if (role === 'doctor') window.location.href = 'doctor.html';
+            if (actualRole === 'admin') window.location.href = 'adminDashboard.html';
+            else if (actualRole === 'doctor') window.location.href = 'doctor.html';
             else window.location.href = 'patient.html';
         }, 400);
     }
@@ -354,7 +389,7 @@ class AppController {
         if (!grid) return;
 
         const data = window.dbStore.get();
-        const helaOsuDocs = data.doctors.filter(d => d.status === 'approved' && d.hospital.includes('Hela Osu Weda Gedara'));
+        const helaOsuDocs = (data.doctors || []).filter(d => d.status === 'approved' || !d.status || d.status === 'active');
         const docs = filteredList || helaOsuDocs;
 
         if (docs.length === 0) {
@@ -467,6 +502,31 @@ class AppController {
                 console.error('Error initializing Leaflet map:', e);
             }
         }
+    }
+
+    renderDoctorsGrid() {
+        if (window.patientController) window.patientController.renderDoctorsGrid();
+    }
+    renderPatientBookings() {
+        if (window.patientController) window.patientController.renderPatientBookings();
+    }
+    renderReportConsultations() {
+        if (window.patientController) window.patientController.renderReportConsultations();
+    }
+    renderDoctorPortal() {
+        if (window.doctorController) window.doctorController.renderDoctorPortal();
+    }
+    saveDoctorAvailabilityForm() {
+        if (window.doctorController) window.doctorController.saveDoctorAvailabilityForm();
+    }
+    addCustomDoctorTimeSlot() {
+        if (window.doctorController) window.doctorController.addCustomDoctorTimeSlot();
+    }
+    addDoctorLeaveDate() {
+        if (window.doctorController) window.doctorController.addDoctorLeaveDate();
+    }
+    removeDoctorLeaveDate(d) {
+        if (window.doctorController) window.doctorController.removeLeaveDate(d);
     }
 
     openDoctorDetailsModal(docId) {
@@ -1046,25 +1106,42 @@ class AppController {
         const regSubmitBtn = document.getElementById('regSubmitBtn');
         const patBtn = document.getElementById('regTypePatientBtn');
         const docBtn = document.getElementById('regTypeDoctorBtn');
+        const regRoleTabsContainer = document.getElementById('regRoleTabsContainer');
+        const regSignInBackLink = document.getElementById('regSignInBackLink');
 
         if (regRoleInput) regRoleInput.value = role;
+
+        if (regRoleTabsContainer) regRoleTabsContainer.style.display = 'none';
 
         if (role === 'doctor') {
             if (regFormTitle) regFormTitle.textContent = 'Register Doctor Account';
             if (regFormSubtitle) regFormSubtitle.textContent = 'Submit practitioner registration for Admin approval';
             if (patientRegFields) patientRegFields.style.display = 'none';
             if (doctorRegFields) doctorRegFields.style.display = 'block';
+            if (patBtn) patBtn.style.display = 'none';
+            if (docBtn) docBtn.style.display = 'block';
+
+            if (window.specializationController && window.dbStore) {
+                window.specializationController.populateSpecializationDropdowns(window.dbStore.get());
+            }
             if (regSubmitBtn) regSubmitBtn.innerHTML = '<i class="fa-solid fa-user-doctor"></i> Submit Doctor Registration';
-            if (patBtn) { patBtn.style.background = 'transparent'; patBtn.style.color = '#475569'; }
-            if (docBtn) { docBtn.style.background = '#1b5353'; docBtn.style.color = 'white'; }
+
+            if (regSignInBackLink) {
+                regSignInBackLink.setAttribute('onclick', "app.setLoginRole('doctor'); app.switchView('view-login');");
+            }
         } else {
             if (regFormTitle) regFormTitle.textContent = 'Register Patient Account';
             if (regFormSubtitle) regFormSubtitle.textContent = 'Join Hela Osu Weda Gedara Channeling Network';
             if (patientRegFields) patientRegFields.style.display = 'block';
             if (doctorRegFields) doctorRegFields.style.display = 'none';
+            if (patBtn) patBtn.style.display = 'block';
+            if (docBtn) docBtn.style.display = 'none';
+
             if (regSubmitBtn) regSubmitBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> Register Patient Account';
-            if (patBtn) { patBtn.style.background = '#1b5353'; patBtn.style.color = 'white'; }
-            if (docBtn) { docBtn.style.background = 'transparent'; docBtn.style.color = '#475569'; }
+
+            if (regSignInBackLink) {
+                regSignInBackLink.setAttribute('onclick', "app.setLoginRole('patient'); app.switchView('view-login');");
+            }
         }
     }
 
