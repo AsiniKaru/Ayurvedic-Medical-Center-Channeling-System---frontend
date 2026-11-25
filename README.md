@@ -1,7 +1,3 @@
----
-
-### Frontend `README.md`
-
 ```markdown
 # 🌿 Ayurvedic Medical Center Channeling System – Frontend
 
